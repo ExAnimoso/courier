@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bookworm as base
+FROM python:3.11-slim-bookworm AS base
 
 RUN apt-get update &&  \
     apt-get install --no-install-recommends -y \
@@ -10,7 +10,7 @@ RUN apt-get update &&  \
     # Create a non-root user.
     useradd --shell /usr/sbin/nologin --create-home -d /opt/modmail modmail
 
-FROM base as builder
+FROM base AS builder
 
 COPY requirements.txt .
 

@@ -321,56 +321,20 @@ class Utility(commands.Cog):
         """Shows information about this bot."""
         embed = discord.Embed(color=self.bot.main_color, timestamp=discord.utils.utcnow())
         embed.set_author(
-            name="Modmail - About",
-            icon_url=self.bot.user.display_avatar.url,
-            url="https://discord.gg/F34cRU8",
+            name="Courier Info",
+            icon_url=self.bot.user.display_avatar.url
         )
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
 
-        desc = "This is an open source Discord bot that serves as a means for "
-        desc += "members to easily communicate with server administrators in "
-        desc += "an organised manner."
+        desc = "Courier is a private fork "
+        desc += "of Kyb3r's modmail template on Github."
         embed.description = desc
 
         embed.add_field(name="Uptime", value=self.bot.uptime)
         embed.add_field(name="Latency", value=f"{self.bot.latency * 1000:.2f} ms")
         embed.add_field(name="Version", value=f"`{self.bot.version}`")
-        embed.add_field(name="Authors", value="`kyb3r`, `Taki`, `fourjr`")
         embed.add_field(name="Hosting Method", value=self.bot.hosting_method.name)
 
-        changelog = await Changelog.from_url(self.bot)
-        latest = changelog.latest_version
-
-        if self.bot.version.is_prerelease:
-            stable = next(filter(lambda v: not Version(v.version).is_prerelease, changelog.versions))
-            footer = f"You are on the prerelease version • the latest version is v{stable.version}."
-        elif self.bot.version < Version(latest.version):
-            footer = f"A newer version is available v{latest.version}."
-        else:
-            footer = "You are up to date with the latest version."
-
-        embed.add_field(
-            name="Want Modmail in Your Server?",
-            value="Follow the installation guide on [GitHub](https://github.com/modmail-dev/modmail/) "
-            "and join our [Discord server](https://discord.gg/cnUpwrnpYb)!",
-            inline=False,
-        )
-
-        embed.add_field(
-            name="Support the Developers",
-            value="This bot is completely free for everyone. We rely on kind individuals "
-            "like you to support us on [`Patreon`](https://patreon.com/kyber) (perks included) "
-            "to keep this bot free forever!",
-            inline=False,
-        )
-
-        embed.add_field(
-            name="Project Sponsors",
-            value=f"Checkout the people who supported Modmail with command `{self.bot.prefix}sponsors`!",
-            inline=False,
-        )
-
-        embed.set_footer(text=footer)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["sponsor"])
@@ -410,7 +374,7 @@ class Utility(commands.Cog):
                 title="Debug Logs:",
                 description="You don't have any logs at the moment.",
             )
-            embed.set_footer(text="Go to your console to see your logs.")
+            embed.set_footer(text="Access the console to see your logs.")
             return await ctx.send(embed=embed)
 
         messages = []
@@ -656,13 +620,15 @@ class Utility(commands.Cog):
     @commands.command()
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @utils.trigger_typing
-    async def ping(self, ctx):
+    async def ping(self, ctx):        
         """Pong! Returns your websocket latency."""
         embed = discord.Embed(
-            title="Pong! Websocket Latency:",
-            description=f"{self.bot.ws.latency * 1000:.4f} ms",
+            title="Pong",
+            description=f"It took me **{round(self.bot.ws.latency * 1000)} ms** to respond!",
             color=self.bot.main_color,
         )
+        embed.add_field(name="I've been awake for", value=self.bot.uptime)
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1284984078101385317/1284984458490941481/couriicon_invtheory.png")
         return await ctx.send(embed=embed)
 
     @commands.command()
@@ -1107,7 +1073,7 @@ class Utility(commands.Cog):
         await self.bot.config.update()
         return embed
 
-    @alias.command(name="add", aliases=["create", "make"])
+    @alias.command(name="add", aliases=["create", "make", "new"])
     @checks.has_permissions(PermissionLevel.MODERATOR)
     async def alias_add(self, ctx, name: str.lower, *, value):
         """

@@ -50,7 +50,7 @@ class Modmail(commands.Cog):
         if self.bot.modmail_guild is None:
             embed = discord.Embed(
                 title="Error",
-                description="Modmail functioning guild not found.",
+                description="Functioning guild not found.",
                 color=self.bot.error_color,
             )
             return await ctx.send(embed=embed)
@@ -76,25 +76,26 @@ class Modmail(commands.Cog):
                     logger.info("Granting %s access to Modmail category.", key.name)
                     overwrites[key] = discord.PermissionOverwrite(read_messages=True)
 
-        category = await self.bot.modmail_guild.create_category(name="Modmail", overwrites=overwrites)
+        category = await self.bot.modmail_guild.create_category(name="Postman's Playhouse", overwrites=overwrites)
 
-        await category.edit(position=0)
-
-        log_channel = await self.bot.modmail_guild.create_text_channel(name="bot-logs", category=category)
+        log_channel = await self.bot.modmail_guild.create_text_channel(name="mailroom", category=category)
 
         embed = discord.Embed(
-            title="Friendly Reminder",
-            description=f"You may use the `{self.bot.prefix}config set log_channel_id "
-            "<channel-id>` command to set up a custom log channel, then you can delete this default "
-            f"{log_channel.mention} log channel.",
+            title="Setup complete",
+            description="This is where I post conversation logs, it also serves as a helpful settings channel!",
             color=self.bot.main_color,
         )
 
         embed.add_field(
-            name="Thanks for using our bot!",
-            value="If you like what you see, consider giving the "
-            "[repo a star](https://github.com/modmail-dev/modmail) :star: and if you are "
-            "feeling extra generous, buy us coffee on [Patreon](https://patreon.com/kyber) :heart:!",
+            name="Communication Basics",
+            value="`,contact [UserID]` to initiate a conversation through me\n\n`,reply` , `,anonreply` to respond to members\n\n`,close` to end the current conversation",
+            inline=True
+        )
+
+        embed.add_field(
+            name="Basic Safety Measures",
+            value="`,block [UserID] or [RoleID]` to turn away unwanted members\nmessaging me\n\n`,disable` , `,enable`  to toggle server inbox (requires an admin)",
+            inline=True
         )
 
         embed.set_footer(text=f'Type "{self.bot.prefix}help" for a complete list of commands.')
@@ -104,14 +105,6 @@ class Modmail(commands.Cog):
         self.bot.config["log_channel_id"] = log_channel.id
 
         await self.bot.config.update()
-        await ctx.send(
-            "**Successfully set up server.**\n"
-            "Consider setting permission levels to give access to roles "
-            "or users the ability to use Modmail.\n\n"
-            f"Type:\n- `{self.bot.prefix}permissions` and `{self.bot.prefix}permissions add` "
-            "for more info on setting permissions.\n"
-            f"- `{self.bot.prefix}config help` for a list of available customizations."
-        )
 
         if not self.bot.config["command_permissions"] and not self.bot.config["level_permissions"]:
             await self.bot.update_perms(PermissionLevel.REGULAR, -1)

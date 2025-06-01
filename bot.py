@@ -162,12 +162,7 @@ class ModmailBot(commands.Bot):
         return HostingMethod.OTHER
 
     def startup(self):
-        logger.line()
-        logger.info("┌┬┐┌─┐┌┬┐┌┬┐┌─┐┬┬")
-        logger.info("││││ │ │││││├─┤││")
-        logger.info("┴ ┴└─┘─┴┘┴ ┴┴ ┴┴┴─┘")
-        logger.info("v%s", __version__)
-        logger.info("Authors: kyb3r, fourjr, Taaku18")
+        logger.info("Messenger deployed! Ready for duty, iterators!")
         logger.line()
         logger.info("discord.py: v%s", discord.__version__)
         logger.line()

@@ -23,12 +23,12 @@ load_dotenv()
 class ConfigManager:
     public_keys = {
         # activity
-        "twitch_url": "https://www.twitch.tv/discordmodmail/",
+        "twitch_url": None,
         # bot settings
         "main_category_id": None,
         "fallback_category_id": None,
         "prefix": "?",
-        "mention": "@here",
+        "mention": None,
         "main_color": str(discord.Color.blurple()),
         "error_color": str(discord.Color.red()),
         "user_typing": False,
@@ -63,14 +63,14 @@ class ConfigManager:
         "thread_auto_close": isodate.Duration(),
         "thread_auto_close_response": "This thread has been closed automatically due to inactivity after {timeout}.",
         "thread_creation_response": "The staff team will get back to you as soon as possible.",
-        "thread_creation_footer": "Your message has been sent",
+        "thread_creation_footer": None,
         "thread_contact_silently": False,
         "thread_self_closable_creation_footer": "Click the lock to close the thread",
         "thread_creation_contact_title": "New Thread",
         "thread_creation_self_contact_response": "You have opened a Modmail thread.",
         "thread_creation_contact_response": "{creator.name} has opened a Modmail thread.",
         "thread_creation_title": "Thread Created",
-        "thread_close_footer": "Replying will create a new thread",
+        "thread_close_footer": None,
         "thread_close_title": "Thread Closed",
         "thread_close_response": "{closer.mention} has closed this Modmail thread.",
         "thread_self_close_response": "You have closed this Modmail thread.",

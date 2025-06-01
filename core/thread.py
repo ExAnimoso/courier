@@ -224,6 +224,7 @@ class Thread:
                 description=thread_creation_response,
                 timestamp=channel.created_at,
             )
+            embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1284984078101385317/1284984295861125184/courirecieve_invtheory.gif")
 
             recipient_thread_close = self.bot.config.get("recipient_thread_close")
 
@@ -335,12 +336,12 @@ class Thread:
         embed = discord.Embed(color=color, description=user.mention, timestamp=time)
 
         if user.dm_channel:
-            footer = f"User ID: {user.id} • DM ID: {user.dm_channel.id}"
+            footer = f"{user.id}"
         else:
-            footer = f"User ID: {user.id}"
+            footer = f"{user.id}"
 
         if member is not None:
-            embed.set_author(name=str(user), icon_url=member.display_avatar.url, url=log_url)
+            embed.set_author(name=str(user), icon_url=member.display_avatar.url)
 
             if self.bot.config["thread_show_join_age"]:
                 joined = discord.utils.format_dt(member.joined_at, "R")
@@ -352,21 +353,20 @@ class Thread:
                 embed.add_field(name="Roles", value=role_names, inline=True)
             embed.set_footer(text=footer)
         else:
-            embed.set_author(name=str(user), icon_url=user.display_avatar.url, url=log_url)
-            embed.set_footer(text=f"{footer} • (not in main server)")
+            embed.set_author(name=str(user))
+            embed.set_footer(text=f"{footer} • (User is not in this server.)")
 
         embed.description += ", ".join(user_info)
 
         if log_count is not None:
             connector = "with" if user_info else "has"
             thread = "thread" if log_count == 1 else "threads"
-            embed.description += f" {connector} **{log_count or 'no'}** past {thread}."
+            embed.description += f" {connector} **{log_count or 'no'}** previous {thread}."
         else:
             embed.description += "."
 
-        mutual_guilds = [g for g in self.bot.guilds if user in g.members]
-        if member is None or len(mutual_guilds) > 1:
-            embed.add_field(name="Mutual Server(s)", value=", ".join(g.name for g in mutual_guilds))
+        if member is None:
+            embed.add_field(name="No shared Servers")
 
         return embed
 
@@ -471,8 +471,8 @@ class Thread:
             else:
                 _nsfw = ""
 
-            desc = f"[`{_nsfw}{log_data['key']}`]({log_url}): "
-            desc += truncate(sneak_peak, max=75 - 13)
+            desc = f"**Thread preview:** "
+            desc += truncate(sneak_peak, max=75 - 20)
         else:
             desc = "Could not resolve log url."
             log_url = None
@@ -491,7 +491,7 @@ class Thread:
 
         embed.title = user
 
-        event = "Thread Closed as Scheduled" if scheduled else "Thread Closed"
+        event = "Closed"
         # embed.set_author(name=f"Event: {event}", url=log_url)
         embed.set_footer(text=f"{event} by {_closer}", icon_url=closer.display_avatar.url)
         embed.timestamp = discord.utils.utcnow()
@@ -501,7 +501,7 @@ class Thread:
         if self.bot.log_channel is not None and self.channel is not None:
             if self.bot.config["show_log_url_button"]:
                 view = discord.ui.View()
-                view.add_item(discord.ui.Button(label="Log link", url=log_url, style=discord.ButtonStyle.url))
+                view.add_item(discord.ui.Button(label="See Courier Log", url=log_url, style=discord.ButtonStyle.url))
             else:
                 view = None
             tasks.append(self.bot.log_channel.send(embed=embed, view=view))
@@ -832,9 +832,9 @@ class Thread:
         else:
             return await message.channel.send(
                 embed=discord.Embed(
+                    title="Oops!",
                     color=self.bot.error_color,
-                    description="Your message could not be delivered since "
-                    "the recipient shares no servers with the bot.",
+                    description="The recipient doesn't share a server with Courier.",
                 )
             )
 
@@ -859,10 +859,9 @@ class Thread:
             user_msg = None
             if isinstance(e, discord.Forbidden):
                 description = (
-                    "Your message could not be delivered as "
-                    "the recipient is only accepting direct "
-                    "messages from friends, or the bot was "
-                    "blocked by the recipient."
+                    "I couldn't deliver your message; this "
+                    "user may have blocked me or disabled their "
+                    "DMs. Give them a ping in <#291185557789343744> or MTA so we can reach out!"
                 )
             else:
                 description = (
@@ -954,7 +953,7 @@ class Thread:
         if self.bot.config["show_timestamp"]:
             embed.timestamp = message.created_at
 
-        system_avatar_url = "https://discordapp.com/assets/f78426a064bc9dd24847519259bc42af.png"
+        system_avatar_url = "https://cdn.discordapp.com/avatars/1114695893363470377/5ef96c2d6724d61bf04353bddd309e77.webp"
 
         if not note:
             if anonymous and from_mod and not isinstance(destination, discord.TextChannel):
@@ -971,7 +970,6 @@ class Thread:
                 embed.set_author(
                     name=name,
                     icon_url=avatar_url,
-                    url=f"https://discordapp.com/channels/{self.bot.guild.id}#{message.id}",
                 )
             else:
                 # Normal message
@@ -980,14 +978,12 @@ class Thread:
                 embed.set_author(
                     name=name,
                     icon_url=avatar_url,
-                    url=f"https://discordapp.com/users/{author.id}#{message.id}",
                 )
         else:
             # Special note messages
             embed.set_author(
                 name=f"{'Persistent' if persistent_note else ''} Note ({author.name})",
                 icon_url=system_avatar_url,
-                url=f"https://discordapp.com/users/{author.id}#{message.id}",
             )
 
         ext = [(a.url, a.filename, False) for a in message.attachments]
@@ -1116,7 +1112,7 @@ class Thread:
             embed.colour = self.bot.mod_color
             # Anonymous reply sent in thread channel
             if anonymous and isinstance(destination, discord.TextChannel):
-                embed.set_footer(text="Anonymous Reply")
+                embed.set_footer(text=f"You appeared as \"Staff Member\"")
             # Normal messages
             elif not anonymous:
                 mod_tag = self.bot.config["mod_tag"]
@@ -1128,7 +1124,7 @@ class Thread:
         elif note:
             embed.colour = self.bot.main_color
         else:
-            embed.set_footer(text=f"Message ID: {message.id}")
+            embed.set_footer(text=f"{author.id}")
             embed.colour = self.bot.recipient_color
 
         if (from_mod or note) and not thread_creation:
@@ -1177,7 +1173,7 @@ class Thread:
                 msg = await destination.send(plain_message, files=files)
             else:
                 # Plain to mods
-                embed.set_footer(text="[PLAIN] " + embed.footer.text)
+                embed.set_footer(text="Plain text " + embed.footer.text)
                 msg = await destination.send(mentions, embed=embed)
 
         else:
@@ -1207,11 +1203,11 @@ class Thread:
         topic = f"Title: {title}\n"
 
         user_id = match_user_id(self.channel.topic)
-        topic += f"User ID: {user_id}"
+        topic += f"{user_id}"
 
         if self._other_recipients:
             ids = ",".join(str(i.id) for i in self._other_recipients)
-            topic += f"\nOther Recipients: {ids}"
+            topic += f"\nMulti-user thread: {ids}"
 
         await self.channel.edit(topic=topic)
 

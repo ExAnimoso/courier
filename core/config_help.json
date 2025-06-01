@@ -45,7 +45,7 @@
     ]
   },
   "mention": {
-    "default": "@here",
+    "default": "New communication thread!",
     "description": "This is the message above user information for when a new thread is created in the channel.",
     "examples": [
       "`{prefix}config set mention Yo~ Here's a new thread for ya!`",
