@@ -396,6 +396,7 @@ class ApiClient:
         message_id: str = "",
         channel_id: str = "",
         type_: str = "thread_message",
+        attachments = None,
     ) -> dict:
         return NotImplemented
 
@@ -575,7 +576,7 @@ class MongoDBClient(ApiClient):
             prefix = ""
         return f"{self.bot.config['log_url'].strip('/')}{'/' + prefix if prefix else ''}/{doc['key']}"
 
-    async def create_log_entry(self, recipient: Member, channel: TextChannel, creator: Member) -> str:
+    async def create_log_entry(self, recipient: Member, channel: TextChannel, creator: Member, archive_thread: TextChannel = None) -> str:
         key = secrets.token_hex(6)
 
         await self.logs.insert_one(
@@ -586,6 +587,7 @@ class MongoDBClient(ApiClient):
                 "created_at": str(discord.utils.utcnow()),
                 "closed_at": None,
                 "channel_id": str(channel.id),
+                "archive_thread_id": str(archive_thread.id) if archive_thread else None,
                 "guild_id": str(self.bot.guild_id),
                 "bot_id": str(self.bot.user.id),
                 "recipient": {
@@ -650,9 +652,12 @@ class MongoDBClient(ApiClient):
         message_id: str = "",
         channel_id: str = "",
         type_: str = "thread_message",
+        attachments = None,
     ) -> dict:
         channel_id = str(channel_id) or str(message.channel.id)
         message_id = str(message_id) or str(message.id)
+
+        message_attachments = attachments or message.attachments
 
         data = {
             "timestamp": str(message.created_at),
@@ -674,7 +679,7 @@ class MongoDBClient(ApiClient):
                     "size": a.size,
                     "url": a.url,
                 }
-                for a in message.attachments
+                for a in message_attachments
             ],
         }
 

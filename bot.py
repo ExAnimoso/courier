@@ -34,6 +34,7 @@ except ImportError:
     pass
 
 from core import checks
+from core.archiver import ArchiveThreadLogger
 from core.changelog import Changelog
 from core.clients import ApiClient, MongoDBClient, PluginDatabaseClient
 from core.config import ConfigManager
@@ -82,6 +83,7 @@ class ModmailBot(commands.Bot):
         self._started = False
 
         self.threads = ThreadManager(self)
+        self.archive_logger = ArchiveThreadLogger(self)
 
         log_dir = os.path.join(temp_dir, "logs")
         if not os.path.exists(log_dir):
@@ -634,6 +636,15 @@ class ModmailBot(commands.Bot):
         an API call if they're not found in the cache.
         """
         return self.get_user(id) or await self.fetch_user(id)
+
+    async def get_or_fetch_channel(self, id: int) -> discord.abc.GuildChannel:
+        """
+        Retrieve a Channel based on their ID.
+
+        This tries getting the channel from the cache and falls back to making
+        an API call if they're not found in the cache.
+        """
+        return self.get_channel(id) or await self.fetch_channel(id)
 
     @staticmethod
     async def get_or_fetch_member(guild: discord.Guild, member_id: int) -> typing.Optional[discord.Member]:
@@ -1189,7 +1200,8 @@ class ModmailBot(commands.Bot):
                 ):
                     await thread.reply(message, anonymous=anonymous, plain=plain)
                 else:
-                    await self.api.append_log(message, type_="internal")
+                    archive_message = await self.archive_logger.log_internal_message(thread._archive_thread, message)
+                    await self.api.append_log(message, type_="internal", attachments=archive_message.attachments if archive_message else None)
             elif ctx.invoked_with:
                 exc = commands.CommandNotFound('Command "{}" is not found'.format(ctx.invoked_with))
                 self.dispatch("command_error", ctx, exc)

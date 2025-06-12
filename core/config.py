@@ -44,6 +44,7 @@ class ConfigManager:
         "log_channel_id": None,
         "mention_channel_id": None,
         "update_channel_id": None,
+        "archive_webhook": None,
         # updates
         "update_notifications": True,
         # threads

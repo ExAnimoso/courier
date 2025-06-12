@@ -249,6 +249,15 @@
       "See also: `log_channel_id`"
     ]
   },
+  "archive_webhook": {
+    "default": "None",
+    "description": "Archive webhook url used to log internal messages.",
+    "examples":[
+    ],
+    "notes": [
+      "The webhook should be set for the channel specified by `log_channel_id`."
+    ]
+  },
   "update_notifications": {
     "default": "Yes",
     "description": "This is the channel where update notifications are sent to.",

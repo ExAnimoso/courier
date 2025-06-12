@@ -27,6 +27,7 @@ __all__ = [
     "parse_channel_topic",
     "match_title",
     "match_user_id",
+    "match_archive_thread_id",
     "match_other_recipients",
     "create_thread_channel",
     "create_not_found_embed",
@@ -251,7 +252,8 @@ def cleanup_code(content: str) -> str:
 
 TOPIC_REGEX = re.compile(
     r"(?:\bTitle:\s*(?P<title>.*)\n)?"
-    r"\bUser ID:\s*(?P<user_id>\d{17,21})\b"
+    r"\bUser ID:\s*(?P<user_id>\d{17,21})\b\n"
+    r"\bArchive:\s*(?P<archive_thread_id>\d{17,21})\b"
     r"(?:\nOther Recipients:\s*(?P<other_ids>\d{17,21}(?:(?:\s*,\s*)\d{17,21})*)\b)?",
     flags=re.IGNORECASE | re.DOTALL,
 )
@@ -271,9 +273,9 @@ def parse_channel_topic(text: str) -> typing.Tuple[typing.Optional[str], int, ty
     Returns
     -------
     Tuple[Optional[str], int, List[int]]
-        A tuple of title, user ID, and other recipients IDs.
+        A tuple of title, user ID, archive thread ID, and other recipients IDs.
     """
-    title, user_id, other_ids = None, -1, []
+    title, user_id, archive_thread_id, other_ids = None, -1, -1, []
     if isinstance(text, str):
         match = TOPIC_REGEX.search(text)
     else:
@@ -286,12 +288,14 @@ def parse_channel_topic(text: str) -> typing.Tuple[typing.Optional[str], int, ty
         # user ID string is the required one in regex, so if match is found
         # the value of this won't be None
         user_id = int(groupdict["user_id"])
+        
+        archive_thread_id = int(groupdict["archive_thread_id"])
 
         oth_ids = groupdict["other_ids"]
         if oth_ids:
             other_ids = list(map(int, oth_ids.split(",")))
 
-    return title, user_id, other_ids
+    return title, user_id, archive_thread_id, other_ids
 
 
 def match_title(text: str) -> str:
@@ -339,6 +343,34 @@ def match_user_id(text: str, any_string: bool = False) -> int:
     return user_id
 
 
+def match_archive_thread_id(text: str, any_string: bool = False) -> int:
+    """
+    Matches an archive thread ID in the format of "Archive: 12345".
+
+    Parameters
+    ----------
+    text : str
+        The text of the archive thread ID.
+    any_string: bool
+        Whether to search any string that matches the UID_REGEX, e.g. not from channel topic.
+        Defaults to False.
+
+    Returns
+    -------
+    int
+        The archive thread ID if found. Otherwise, -1.
+    """
+    archive_thread_id = -1
+    if any_string:
+        match = UID_REGEX.search(text)
+        if match is not None:
+            archive_thread_id = int(match.group(2))
+    else:
+        archive_thread_id = parse_channel_topic(text)[2]
+
+    return archive_thread_id
+
+
 def match_other_recipients(text: str) -> typing.List[int]:
     """
     Matches a title in the format of "Other Recipients: XXXX,XXXX"
@@ -353,7 +385,7 @@ def match_other_recipients(text: str) -> typing.List[int]:
     List[int]
         The list of other recipients IDs.
     """
-    return parse_channel_topic(text)[2]
+    return parse_channel_topic(text)[3]
 
 
 def create_not_found_embed(word, possibilities, name, n=2, cutoff=0.6) -> discord.Embed:
@@ -452,7 +484,7 @@ def get_top_role(member: discord.Member, hoisted=True):
             return role
 
 
-async def create_thread_channel(bot, recipient, category, overwrites, *, name=None, errors_raised=None):
+async def create_thread_channel(bot, recipient, category, overwrites, archive_thread_id, *, name=None, errors_raised=None):
     name = name or bot.format_channel_name(recipient)
     errors_raised = errors_raised or []
 
@@ -461,7 +493,7 @@ async def create_thread_channel(bot, recipient, category, overwrites, *, name=No
             name=name,
             category=category,
             overwrites=overwrites,
-            topic=f"User ID: {recipient.id}",
+            topic=f"User ID: {recipient.id}\nArchive: {archive_thread_id}",
             reason="Creating a thread channel.",
         )
     except discord.HTTPException as e:
@@ -502,6 +534,13 @@ async def create_thread_channel(bot, recipient, category, overwrites, *, name=No
         raise
 
     return channel
+
+
+async def create_archive_thread(bot, recipient: discord.Member):
+    try:
+      return await bot.log_channel.create_thread(type=discord.ChannelType.public_thread, name=f'{recipient.name} ({recipient.display_name}) ({recipient.id})')
+    except:
+      return None
 
 
 def get_joint_id(message: discord.Message) -> typing.Optional[int]:

@@ -1,7 +1,7 @@
 version: "3.7"
 services:
   bot:
-    image: ghcr.io/modmail-dev/modmail:master
+    image: raincord/courier
     restart: always
     env_file:
       - .env

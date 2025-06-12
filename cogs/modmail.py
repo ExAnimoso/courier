@@ -2030,19 +2030,22 @@ class Modmail(commands.Cog):
                 and message.embeds[0].footer.text
             ):
                 user_id = match_user_id(message.embeds[0].footer.text, any_string=True)
+                archive_thread_id = match_archive_thread_id(ctx.channel.topic)
                 other_recipients = match_other_recipients(ctx.channel.topic)
                 for n, uid in enumerate(other_recipients):
                     other_recipients[n] = await self.bot.get_or_fetch_user(uid)
+
+                archive_thread = self.bot.get_or_fetch_channel(archive_thread_id)
 
                 if user_id != -1:
                     recipient = self.bot.get_user(user_id)
                     if recipient is None:
                         self.bot.threads.cache[user_id] = thread = Thread(
-                            self.bot.threads, user_id, ctx.channel, other_recipients
+                            self.bot.threads, user_id, ctx.channel, archive_thread, other_recipients
                         )
                     else:
                         self.bot.threads.cache[user_id] = thread = Thread(
-                            self.bot.threads, recipient, ctx.channel, other_recipients
+                            self.bot.threads, recipient, ctx.channel, archive_thread, other_recipients
                         )
                     thread.ready = True
                     logger.info("Setting current channel's topic to User ID and created new thread.")
@@ -2084,17 +2087,20 @@ class Modmail(commands.Cog):
                         except discord.HTTPException:
                             pass
 
+                archive_thread_id = match_archive_thread_id(ctx.channel.topic)
+                archive_thread = self.bot.get_or_fetch_channel(archive_thread_id)
+
                 other_recipients = match_other_recipients(ctx.channel.topic)
                 for n, uid in enumerate(other_recipients):
                     other_recipients[n] = await self.bot.get_or_fetch_user(uid)
 
                 if recipient is None:
                     self.bot.threads.cache[user.id] = thread = Thread(
-                        self.bot.threads, user_id, ctx.channel, other_recipients
+                        self.bot.threads, user_id, ctx.channel, archive_thread, other_recipients
                     )
                 else:
                     self.bot.threads.cache[user.id] = thread = Thread(
-                        self.bot.threads, recipient, ctx.channel, other_recipients
+                        self.bot.threads, recipient, ctx.channel, archive_thread, other_recipients
                     )
                 thread.ready = True
                 logger.info("Setting current channel's topic to User ID and created new thread.")

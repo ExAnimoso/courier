@@ -25,9 +25,11 @@ from core.utils import (
     parse_channel_topic,
     match_title,
     match_user_id,
+    match_archive_thread_id,
     truncate,
     get_top_role,
     create_thread_channel,
+    create_archive_thread,
     get_joint_id,
     AcceptButton,
     DenyButton,
@@ -46,6 +48,7 @@ class Thread:
         manager: "ThreadManager",
         recipient: typing.Union[discord.Member, discord.User, int],
         channel: typing.Union[discord.DMChannel, discord.TextChannel] = None,
+        archive_thread: discord.Thread = None,
         other_recipients: typing.List[typing.Union[discord.Member, discord.User]] = None,
     ):
         self.manager = manager
@@ -60,6 +63,7 @@ class Thread:
             self._recipient = recipient
         self._other_recipients = other_recipients or []
         self._channel = channel
+        self._archive_thread = archive_thread
         self._genesis_message = None
         self._ready_event = asyncio.Event()
         self.wait_tasks = []
@@ -129,12 +133,13 @@ class Thread:
     @classmethod
     async def from_channel(cls, manager: "ThreadManager", channel: discord.TextChannel) -> "Thread":
         # there is a chance it grabs from another recipient's main thread
-        _, recipient_id, other_ids = parse_channel_topic(channel.topic)
+        _, recipient_id, archive_thread_id, other_ids = parse_channel_topic(channel.topic)
 
         if recipient_id in manager.cache:
             thread = manager.cache[recipient_id]
         else:
             recipient = await manager.bot.get_or_fetch_user(recipient_id)
+            archive_thread = await manager.bot.get_or_fetch_channel(archive_thread_id)
 
             other_recipients = []
             for uid in other_ids:
@@ -144,7 +149,7 @@ class Thread:
                     continue
                 other_recipients.append(other_recipient)
 
-            thread = cls(manager, recipient or recipient_id, channel, other_recipients)
+            thread = cls(manager, recipient or recipient_id, channel, archive_thread, other_recipients)
 
         return thread
 
@@ -171,7 +176,8 @@ class Thread:
             overwrites = {}
 
         try:
-            channel = await create_thread_channel(self.bot, recipient, category, overwrites)
+            archive_thread = await create_archive_thread(self.bot, recipient)
+            channel = await create_thread_channel(self.bot, recipient, category, overwrites, archive_thread.id)
         except discord.HTTPException as e:  # Failed to create due to missing perms.
             logger.critical("An error occurred while creating a thread.", exc_info=True)
             self.manager.cache.pop(self.id)
@@ -186,11 +192,13 @@ class Thread:
             return
 
         self._channel = channel
+        self._archive_thread = archive_thread
 
         try:
-            log_url, log_data = await asyncio.gather(
+            log_url, log_data, _ = await asyncio.gather(
                 self.bot.api.create_log_entry(recipient, channel, creator or recipient),
                 self.bot.api.get_user_logs(recipient.id),
+                self.bot.archive_logger.log_thread_start(recipient, creator or recipient, archive_thread),
             )
 
             log_count = sum(1 for log in log_data if not log["open"])
@@ -447,6 +455,7 @@ class Thread:
                     },
                 },
             )
+            await self.bot.archive_logger.log_closing_message(self._archive_thread, message or self.bot.config["thread_close_response"], closer.name, silent)
         else:
             log_data = None
 
@@ -504,7 +513,8 @@ class Thread:
                 view.add_item(discord.ui.Button(label="See Courier Log", url=log_url, style=discord.ButtonStyle.url))
             else:
                 view = None
-            tasks.append(self.bot.log_channel.send(embed=embed, view=view))
+            log_destination = self._archive_thread or self.bot.log_channel
+            tasks.append(log_destination.send(embed=embed, view=view))
 
         # Thread closed message
 
@@ -812,6 +822,10 @@ class Thread:
         )
 
         self.bot.loop.create_task(
+            self.bot.archive_logger.log_note_message(self._archive_thread, message)
+        )
+
+        self.bot.loop.create_task(
             self.bot.api.append_log(message, message_id=msg.id, channel_id=self.channel.id, type_="system")
         )
 
@@ -881,14 +895,17 @@ class Thread:
                 message, destination=self.channel, from_mod=True, anonymous=anonymous, plain=plain
             )
 
-            tasks.append(
-                self.bot.api.append_log(
-                    message,
-                    message_id=msg.id,
-                    channel_id=self.channel.id,
-                    type_="anonymous" if anonymous else "thread_message",
-                )
-            )
+            async def logging_task():
+              archive_message = await self.bot.archive_logger.archive_message_copy(self._archive_thread, msg)
+              await self.bot.api.append_log(
+                  message,
+                  message_id=msg.id,
+                  channel_id=self.channel.id,
+                  type_="anonymous" if anonymous else "thread_message",
+                  attachments=archive_message.attachments if archive_message else None,
+              )
+
+            tasks.append(logging_task())
 
             # Cancel closing if a thread message is sent.
             if self.close_task is not None:
@@ -937,9 +954,6 @@ class Thread:
         if not self.ready:
             await self.wait_until_ready()
 
-        if not from_mod and not note:
-            self.bot.loop.create_task(self.bot.api.append_log(message, channel_id=self.channel.id))
-
         destination = destination or self.channel
 
         author = message.author
@@ -952,8 +966,6 @@ class Thread:
         embed = discord.Embed(description=message.content)
         if self.bot.config["show_timestamp"]:
             embed.timestamp = message.created_at
-
-        system_avatar_url = "https://cdn.discordapp.com/avatars/1114695893363470377/5ef96c2d6724d61bf04353bddd309e77.webp"
 
         if not note:
             if anonymous and from_mod and not isinstance(destination, discord.TextChannel):
@@ -983,10 +995,15 @@ class Thread:
             # Special note messages
             embed.set_author(
                 name=f"{'Persistent' if persistent_note else ''} Note ({author.name})",
-                icon_url=system_avatar_url,
+                icon_url=self.bot.config["anon_avatar_url"],
             )
 
-        ext = [(a.url, a.filename, False) for a in message.attachments]
+        # Gracefully breaking existing functionality for the sake of implementing file-oriented attachment handling
+        # ext = [(a.url, a.filename, False) for a in message.attachments]
+        ext = []
+        files = []
+        for i in message.attachments:
+          files.append(await i.to_file())
 
         images = []
         attachments = []
@@ -1177,13 +1194,16 @@ class Thread:
                 msg = await destination.send(mentions, embed=embed)
 
         else:
-            msg = await destination.send(mentions, embed=embed)
+            msg = await destination.send(mentions, embed=embed, files=files)
 
         if additional_images:
             self.ready = False
             await asyncio.gather(*additional_images)
             self.ready = True
-
+        
+        if not from_mod and not note:
+            archive_message = await self.bot.archive_logger.archive_message_copy(self._archive_thread, msg)
+            self.bot.loop.create_task(self.bot.api.append_log(message, channel_id=self.channel.id, attachments=archive_message.attachments if archive_message else None))
         return msg
 
     async def get_notifications(self) -> str:
@@ -1203,7 +1223,9 @@ class Thread:
         topic = f"Title: {title}\n"
 
         user_id = match_user_id(self.channel.topic)
-        topic += f"{user_id}"
+        topic += f"{user_id}\n"
+        archive_thread_id = match_archive_thread_id(self.channel.topic)
+        topic += f"{archive_thread_id}"
 
         if self._other_recipients:
             ids = ",".join(str(i.id) for i in self._other_recipients)
@@ -1233,11 +1255,12 @@ class Thread:
 
     async def add_users(self, users: typing.List[typing.Union[discord.Member, discord.User]]) -> None:
         topic = ""
-        title, _, _ = parse_channel_topic(self.channel.topic)
+        title, _, archive_thread_id, _ = parse_channel_topic(self.channel.topic)
         if title is not None:
             topic += f"Title: {title}\n"
 
-        topic += f"User ID: {self._id}"
+        topic += f"User ID: {self._id}\n"
+        topic += f"Archive: {archive_thread_id}"
 
         self._other_recipients += users
         self._other_recipients = list(set(self._other_recipients))
@@ -1251,11 +1274,12 @@ class Thread:
 
     async def remove_users(self, users: typing.List[typing.Union[discord.Member, discord.User]]) -> None:
         topic = ""
-        title, user_id, _ = parse_channel_topic(self.channel.topic)
+        title, user_id, archive_thread_id, _ = parse_channel_topic(self.channel.topic)
         if title is not None:
             topic += f"Title: {title}\n"
 
-        topic += f"User ID: {user_id}"
+        topic += f"User ID: {user_id}\n"
+        topic += f"Archive: {archive_thread_id}"
 
         for u in users:
             self._other_recipients.remove(u)
@@ -1327,7 +1351,7 @@ class ThreadManager:
         else:
 
             def check(topic):
-                _, user_id, other_ids = parse_channel_topic(topic)
+                _, user_id, _, other_ids = parse_channel_topic(topic)
                 return recipient_id == user_id or recipient_id in other_ids
 
             channel = discord.utils.find(
@@ -1362,7 +1386,7 @@ class ThreadManager:
         if not channel.topic:
             return None
 
-        _, user_id, other_ids = parse_channel_topic(channel.topic)
+        _, user_id, archive_thread_id, other_ids = parse_channel_topic(channel.topic)
 
         if user_id == -1:
             return None
@@ -1383,10 +1407,14 @@ class ThreadManager:
                 continue
             other_recipients.append(other_recipient)
 
+        archive_thread = None
+        if archive_thread_id is not None:
+            archive_thread = await self.bot.get_or_fetch_channel(archive_thread_id)
+
         if recipient is None:
-            thread = Thread(self, user_id, channel, other_recipients)
+            thread = Thread(self, user_id, channel, archive_thread, other_recipients)
         else:
-            self.cache[user_id] = thread = Thread(self, recipient, channel, other_recipients)
+            self.cache[user_id] = thread = Thread(self, recipient, channel, archive_thread, other_recipients)
         thread.ready = True
 
         return thread
