@@ -2012,6 +2012,18 @@ class Utility(commands.Cog):
                     embed.set_footer(text="Force update")
                     await ctx.send(embed=embed)
 
+    @commands.command()
+    @checks.has_permissions(PermissionLevel.OWNER)
+    async def leave_guilds(self, ctx):
+        """
+        Leave from every guild but raincord.
+        """
+        for guild in self.bot.guilds:
+            if str(guild.id) == self.bot.config['guild_id']:
+                continue
+            await guild.leave()
+            await ctx.send(f'Leaving guild {guild.id}')
+
     @commands.command(hidden=True, name="eval")
     @checks.has_permissions(PermissionLevel.OWNER)
     async def eval_(self, ctx, *, body: str):
