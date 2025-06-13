@@ -368,10 +368,62 @@ class Modmail(commands.Cog):
             embed = create_not_found_embed(name, self.bot.snippets.keys(), "Snippet")
         await ctx.send(embed=embed)
 
+    @commands.command(usage="<below or above> <channel>")
+    @checks.has_permissions(PermissionLevel.MODERATOR)
+    @checks.thread_only()
+    async def move(self, ctx, position_key: str, channel: discord.TextChannel, *, arguments=None):
+        """
+        Move a thread channel below or under another channel.
+        """
+
+        if not channel:
+            raise commands.ChannelNotFound("Unknown")
+        
+        if self.bot.log_channel.category != channel.category:
+            raise commands.BadArgument("Selected channel is outside of the log channel category")
+
+        options = [] if not arguments else arguments.split(" ")
+
+        thread = ctx.thread
+        silent = False
+
+        if options:
+            silent_words = ["silent", "silently"]
+            silent = any(word in silent_words for word in options.split())
+        
+        new_position = None
+        if position_key == "above":
+            new_position = channel.position
+        elif position_key in ("below", "under"):
+            new_position = channel.position + 1
+        else:
+            raise commands.BadArgument("Invalid position key argument")
+
+        await thread.channel.edit(position=new_position, reason=f"{ctx.author} moved this thread.")
+
+        if self.bot.config["thread_move_notify"] and not silent:
+            embed = discord.Embed(
+                title=self.bot.config["thread_move_title"],
+                description=self.bot.config["thread_move_response"],
+                color=self.bot.main_color,
+            )
+            await thread.recipient.send(embed=embed)
+
+        if self.bot.config["thread_move_notify_mods"]:
+            mention = self.bot.config["mention"]
+            if mention is not None:
+                msg = f"{mention}, thread has been moved."
+            else:
+                msg = "Thread has been moved."
+            await thread.channel.send(msg)
+
+        sent_emoji, _ = await self.bot.retrieve_emoji()
+        await self.bot.add_reaction(ctx.message, sent_emoji)
+
     @commands.command(usage="<category> [options]")
     @checks.has_permissions(PermissionLevel.MODERATOR)
     @checks.thread_only()
-    async def move(self, ctx, *, arguments):
+    async def categorymove(self, ctx, *, arguments):
         """
         Move a thread to another category.
 
