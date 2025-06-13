@@ -669,7 +669,8 @@ class Thread:
             async for msg in user.history():
                 if either_direction:
                     if msg.id == joint_id:
-                        return message1, msg
+                        messages.append(msg)
+                        break
 
                 if not (msg.embeds and msg.embeds[0].author.url):
                     continue
@@ -680,10 +681,26 @@ class Thread:
                 except ValueError:
                     continue
 
-        if len(messages) > 1:
-            return messages
+        if len(messages) == 1:
+          raise ValueError("DM message not found.")
+        
+        if self._archive_thread is not None:
+            async for msg in self._archive_thread.history():
+                if either_direction:
+                    if msg.id == joint_id:
+                        messages.append(msg)
+                        break
 
-        raise ValueError("DM message not found.")
+                if not (msg.embeds and msg.embeds[0].author.url):
+                    continue
+                try:
+                    if int(msg.embeds[0].author.url.split("#")[-1]) == joint_id:
+                        messages.append(msg)
+                        break
+                except ValueError:
+                    continue
+    
+        return messages
 
     async def edit_message(self, message_id: typing.Optional[int], message: str) -> None:
         try:
@@ -759,6 +776,23 @@ class Thread:
                 raise ValueError("Thread channel message not found.")
         else:
             raise ValueError("Thread channel message not found.")
+        
+        if self._archive_thread is not None:
+            async for msg in self._archive_thread.history():
+                if not msg.embeds:
+                    continue
+
+                msg_joint_id = get_joint_id(msg)
+                if msg_joint_id is None:
+                    continue
+
+                if msg_joint_id == message.id:
+                    linked_messages.append(msg)
+                    break
+
+                if joint_id is not None and msg_joint_id == joint_id:
+                    linked_messages.append(msg)
+                    break
 
         if get_thread_channel:
             # end early as we only want the main message from thread channel
@@ -801,9 +835,9 @@ class Thread:
 
         for msg in linked_messages:
             embed = msg.embeds[0]
-            if isinstance(msg.channel, discord.TextChannel):
-                # just for thread channel, we put the old message in embed field
-                embed.add_field(name="**Edited, former message:**", value=embed.description)
+            if msg.channel == self.channel or msg.channel == self._archive_thread:
+                # just for thread and archive channels, we put the old message in embed field
+                embed.add_field(name="**Edited, former message:**", value=embed.description, inline=False)
             embed.description = content
             await asyncio.gather(self.bot.api.edit_message(message.id, content), msg.edit(embed=embed))
 
@@ -982,6 +1016,7 @@ class Thread:
                 embed.set_author(
                     name=name,
                     icon_url=avatar_url,
+                    url=f"https://discordapp.com/channels/{self.bot.guild.id}#{message.id}",
                 )
             else:
                 # Normal message
@@ -990,12 +1025,14 @@ class Thread:
                 embed.set_author(
                     name=name,
                     icon_url=avatar_url,
+                    url=f"https://discordapp.com/users/{author.id}#{message.id}",
                 )
         else:
             # Special note messages
             embed.set_author(
                 name=f"{'Persistent' if persistent_note else ''} Note ({author.name})",
                 icon_url=self.bot.config["anon_avatar_url"],
+                url=f"https://discordapp.com/users/{author.id}#{message.id}",
             )
 
         # Gracefully breaking existing functionality for the sake of implementing file-oriented attachment handling
