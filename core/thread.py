@@ -177,7 +177,7 @@ class Thread:
 
         try:
             archive_thread = await create_archive_thread(self.bot, recipient)
-            channel = await create_thread_channel(self.bot, recipient, category, overwrites, archive_thread.id)
+            channel = await create_thread_channel(self.bot, recipient, category, overwrites, archive_thread.id, created_by_recepient=creator==recipient)
         except discord.HTTPException as e:  # Failed to create due to missing perms.
             logger.critical("An error occurred while creating a thread.", exc_info=True)
             self.manager.cache.pop(self.id)

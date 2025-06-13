@@ -484,8 +484,8 @@ def get_top_role(member: discord.Member, hoisted=True):
             return role
 
 
-async def create_thread_channel(bot, recipient, category, overwrites, archive_thread_id, *, name=None, errors_raised=None):
-    name = name or bot.format_channel_name(recipient)
+async def create_thread_channel(bot, recipient, category, overwrites, archive_thread_id, *, name=None, errors_raised=None, created_by_recepient = False):
+    name = name or bot.format_channel_name(recipient, created_by_recepient=created_by_recepient)
     errors_raised = errors_raised or []
 
     try:
@@ -517,7 +517,7 @@ async def create_thread_channel(bot, recipient, category, overwrites, archive_th
                 await bot.config.update()
 
             return await create_thread_channel(
-                bot, recipient, fallback, overwrites, errors_raised=errors_raised
+                bot, recipient, fallback, overwrites, errors_raised=errors_raised, created_by_recepient=created_by_recepient
             )
 
         if "Contains words not allowed" in e.text:
@@ -527,8 +527,9 @@ async def create_thread_channel(bot, recipient, category, overwrites, archive_th
                 recipient,
                 category,
                 overwrites,
-                name=bot.format_channel_name(recipient, force_null=True),
+                name=bot.format_channel_name(recipient, force_null=True, created_by_recepient=created_by_recepient),
                 errors_raised=errors_raised,
+                created_by_recepient=created_by_recepient
             )
 
         raise
