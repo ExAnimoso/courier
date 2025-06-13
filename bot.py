@@ -915,6 +915,20 @@ class ModmailBot(commands.Bot):
                 await self.add_reaction(message, blocked_emoji)
                 return await message.channel.send(embed=embed)
 
+            if len(message.content) == 0 and len(message.attachments) == 0:
+                embed = discord.Embed(
+                    title=self.config["disabled_new_thread_title"],
+                    color=self.error_color,
+                    description="Failed to receive message!\n\nDue to technical limitations, forwarded messages are not supported (we also cannot see polls). If this is one, you may send its contents directly or use a message link.",
+                )
+                embed.set_footer(
+                    text=self.config["disabled_new_thread_footer"],
+                    icon_url=self.get_guild_icon(guild=message.guild, size=128),
+                )
+                logger.info("A new thread using react to contact was blocked from %s due to no content relayed (a forwarded message or a poll).", message.author)
+                await self.add_reaction(message, blocked_emoji)
+                return await message.channel.send(embed=embed)
+
             thread = await self.threads.create(message.author, message=message)
         else:
             if self.config["dm_disabled"] == DMDisabled.ALL_THREADS:
@@ -928,6 +942,20 @@ class ModmailBot(commands.Bot):
                     icon_url=self.get_guild_icon(guild=message.guild, size=128),
                 )
                 logger.info("A message was blocked from %s due to disabled Modmail.", message.author)
+                await self.add_reaction(message, blocked_emoji)
+                return await message.channel.send(embed=embed)
+
+            if len(message.content) == 0 and len(message.attachments) == 0:
+                embed = discord.Embed(
+                    title=self.config["disabled_new_thread_title"],
+                    color=self.error_color,
+                    description="Failed to receive message!\n\nDue to technical limitations, forwarded messages are not supported (we also cannot see polls). If this is one, you may send its contents directly or use a message link.",
+                )
+                embed.set_footer(
+                    text=self.config["disabled_new_thread_footer"],
+                    icon_url=self.get_guild_icon(guild=message.guild, size=128),
+                )
+                logger.info("A new thread using react to contact was blocked from %s due to no content relayed (a forwarded message or a poll).", message.author)
                 await self.add_reaction(message, blocked_emoji)
                 return await message.channel.send(embed=embed)
 
