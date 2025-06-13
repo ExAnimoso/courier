@@ -1458,21 +1458,22 @@ class ModmailBot(commands.Bot):
             if not thread:
                 return
             try:
-                message = await thread.find_linked_message_from_dm(message, get_thread_channel=True)
+                messages = await thread.find_linked_message_from_dm(message, get_thread_channel=True)
             except ValueError as e:
                 if str(e) != "Thread channel message not found.":
                     logger.debug("Failed to find linked message to delete: %s", e)
                 return
-            message = message[0]
-            embed = message.embeds[0]
+            
+            for msg in messages:
+                embed = msg.embeds[0]
 
-            if embed.footer.icon:
-                icon_url = embed.footer.icon.url
-            else:
-                icon_url = None
+                if embed.footer.icon:
+                    icon_url = embed.footer.icon.url
+                else:
+                    icon_url = None
 
-            embed.set_footer(text=f"{embed.footer.text} (deleted)", icon_url=icon_url)
-            await message.edit(embed=embed)
+                embed.set_footer(text=f"{embed.footer.text} (deleted)", icon_url=icon_url)
+                await msg.edit(embed=embed)
             return
 
         if message.author != self.user:
