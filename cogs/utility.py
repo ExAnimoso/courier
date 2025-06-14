@@ -559,7 +559,8 @@ class Utility(commands.Cog):
             activity_type = self.bot.config.get("activity_type")
 
         url = None
-        activity_message = (activity_message or self.bot.config["activity_message"]).strip()
+        activity_message = (activity_message or self.bot.config["activity_message"])
+        activity_message = activity_message.strip() if activity_message else activity_message
         if activity_type is not None and not activity_message:
             logger.warning('No activity message found whilst activity is provided, defaults to "Modmail".')
             activity_message = "Modmail"
