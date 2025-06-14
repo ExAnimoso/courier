@@ -484,7 +484,7 @@ def get_top_role(member: discord.Member, hoisted=True):
             return role
 
 
-async def create_thread_channel(bot, recipient, category, overwrites, archive_thread_id, *, name=None, errors_raised=None, created_by_recepient = False):
+async def create_thread_channel(bot, recipient, category, overwrites, *, archive_thread_id=-1, name=None, errors_raised=None, created_by_recepient = False):
     name = name or bot.format_channel_name(recipient, created_by_recepient=created_by_recepient)
     errors_raised = errors_raised or []
 
@@ -541,6 +541,7 @@ async def create_archive_thread(bot, recipient: discord.Member):
     try:
       return await bot.log_channel.create_thread(type=discord.ChannelType.public_thread, name=f'{recipient.name} ({recipient.display_name}) ({recipient.id})')
     except:
+      logger.exception("Unable to create archive thread")
       return None
 
 
