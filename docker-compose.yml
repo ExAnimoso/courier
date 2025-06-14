@@ -7,8 +7,6 @@ services:
       - .env
     environment:
       - CONNECTION_URI=mongodb://mongo
-    depends_on:
-      - mongo
   logviewer:
     image: ghcr.io/modmail-dev/logviewer:master
     restart: always
