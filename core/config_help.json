@@ -681,6 +681,16 @@
       "See also: `disabled_current_thread_title`, `disabled_current_thread_response`, `disabled_new_thread_footer`."
     ]
   },
+  "forwards_disabled_response": {
+    "default": "Unable to read the message content",
+    "description": "The body of the message embed when Modmail DM has received a message with no available content (usually a forward).",
+    "examples": [
+      "`{prefix}config set forwards_disabled_response Forwarded messages are not working right now.`"
+    ],
+    "notes": [
+      "See also: `disabled_current_thread_title`, `disabled_current_thread_footer`, `disabled_new_thread_response`."
+    ]
+  },
   "recipient_color": {
     "default": "Discord Gold [#F1C40F](https://placehold.it/100/f1c40f?text=+)",
     "description": "This is the color of the messages sent by the recipient, this applies to messages received in the thread channel.",

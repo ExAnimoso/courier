@@ -87,6 +87,7 @@ class ConfigManager:
         "disabled_current_thread_title": "Not Delivered",
         "disabled_current_thread_response": "We are not accepting any messages.",
         "disabled_current_thread_footer": "Please try again later...",
+        "forwards_disabled_response": "Failed to receive message!\n\nDue to technical limitations, forwarded messages are not supported (we also cannot see polls). If this is one, you may send its contents directly or use a message link.",
         "transfer_reactions": True,
         "close_on_leave": False,
         "close_on_leave_reason": "The recipient has left the server.",

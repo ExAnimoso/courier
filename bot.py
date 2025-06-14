@@ -919,7 +919,7 @@ class ModmailBot(commands.Bot):
                 embed = discord.Embed(
                     title=self.config["disabled_new_thread_title"],
                     color=self.error_color,
-                    description="Failed to receive message!\n\nDue to technical limitations, forwarded messages are not supported (we also cannot see polls). If this is one, you may send its contents directly or use a message link.",
+                    description=self.config["forwards_disabled_response"],
                 )
                 embed.set_footer(
                     text=self.config["disabled_new_thread_footer"],
@@ -949,7 +949,7 @@ class ModmailBot(commands.Bot):
                 embed = discord.Embed(
                     title=self.config["disabled_new_thread_title"],
                     color=self.error_color,
-                    description="Failed to receive message!\n\nDue to technical limitations, forwarded messages are not supported (we also cannot see polls). If this is one, you may send its contents directly or use a message link.",
+                    description=self.config["forwards_disabled_response"],
                 )
                 embed.set_footer(
                     text=self.config["disabled_new_thread_footer"],
