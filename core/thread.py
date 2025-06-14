@@ -1396,7 +1396,8 @@ class ThreadManager:
                 self.bot.modmail_guild.text_channels,
             )
 
-            if channel:
+            # Only take into account channels starting with 🛰️
+            if channel and channel.name.startswith("🛰️"):
                 thread = await Thread.from_channel(self, channel)
                 if thread.recipient:
                     # only save if data is valid.
@@ -1424,7 +1425,7 @@ class ThreadManager:
             return None
     
         # Temporarily added check to prevent couri going into sprinkles' threads
-        if not channel.name.startswith('🛰️'):
+        if not channel.name.startswith("🛰️"):
             return None
 
         _, user_id, archive_thread_id, other_ids = parse_channel_topic(channel.topic)
