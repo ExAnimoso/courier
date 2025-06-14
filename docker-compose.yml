@@ -5,8 +5,6 @@ services:
     restart: always
     env_file:
       - .env
-    environment:
-      - CONNECTION_URI=mongodb://mongo
   logviewer:
     image: ghcr.io/modmail-dev/logviewer:master
     restart: always

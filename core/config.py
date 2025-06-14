@@ -44,7 +44,6 @@ class ConfigManager:
         "log_channel_id": None,
         "mention_channel_id": None,
         "update_channel_id": None,
-        "archive_webhook": None,
         # updates
         "update_notifications": True,
         # threads
@@ -164,6 +163,7 @@ class ConfigManager:
         "guild_id": None,
         "log_url": "https://example.com/",
         "log_url_prefix": "/logs",
+        "archive_webhook": None,
         "mongo_uri": None,
         "database_type": "mongodb",
         "connection_uri": None,  # replace mongo uri in the future

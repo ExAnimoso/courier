@@ -255,6 +255,7 @@
     "examples":[
     ],
     "notes": [
+      "This configuration can only to be set through `.env` file or environment (config) variables.",
       "The webhook should be set for the channel specified by `log_channel_id`."
     ]
   },
