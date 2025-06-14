@@ -1422,6 +1422,10 @@ class ThreadManager:
 
         if not channel.topic:
             return None
+    
+        # Temporarily added check to prevent couri going into sprinkles' threads
+        if not channel.name.startswith('🛰️'):
+            return None
 
         _, user_id, archive_thread_id, other_ids = parse_channel_topic(channel.topic)
 

@@ -1824,7 +1824,8 @@ class ModmailBot(commands.Bot):
         else:
             new_name = '📭' + new_name
 
-        return new_name
+        # Temporarily added symbol to prevent Sprinkles from going onto couri's territory
+        return '🛰️' + new_name
 
 
 def main():
