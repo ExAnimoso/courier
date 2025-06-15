@@ -252,12 +252,13 @@ def cleanup_code(content: str) -> str:
 
 TOPIC_REGEX = re.compile(
     r"(?:\bTitle:\s*(?P<title>.*)\n)?"
-    r"\bUser ID:\s*(?P<user_id>\d{17,21})\b\n"
-    r"\bArchive:\s*(?P<archive_thread_id>\d{17,21})\b"
+    r"\bUser ID:\s*(?P<user_id>\d{17,21})\b"
+    r"(?:\n\bArchive:\s*(?P<archive_thread_id>\d{17,21})\b)?"
     r"(?:\nOther Recipients:\s*(?P<other_ids>\d{17,21}(?:(?:\s*,\s*)\d{17,21})*)\b)?",
     flags=re.IGNORECASE | re.DOTALL,
 )
 UID_REGEX = re.compile(r"\bUser ID:\s*(\d{17,21})\b", flags=re.IGNORECASE)
+ARCHIVE_THREAD_ID_REGEX = re.compile(r"\Archive:\s*(\d{17,21})\b", flags=re.IGNORECASE)
 
 
 def parse_channel_topic(text: str) -> typing.Tuple[typing.Optional[str], int, typing.List[int]]:
@@ -289,7 +290,9 @@ def parse_channel_topic(text: str) -> typing.Tuple[typing.Optional[str], int, ty
         # the value of this won't be None
         user_id = int(groupdict["user_id"])
         
-        archive_thread_id = int(groupdict["archive_thread_id"])
+        archive_thread_id = groupdict["archive_thread_id"]
+        if archive_thread_id:
+            archive_thread_id = int(archive_thread_id)
 
         oth_ids = groupdict["other_ids"]
         if oth_ids:
@@ -362,7 +365,7 @@ def match_archive_thread_id(text: str, any_string: bool = False) -> int:
     """
     archive_thread_id = -1
     if any_string:
-        match = UID_REGEX.search(text)
+        match = ARCHIVE_THREAD_ID_REGEX.search(text)
         if match is not None:
             archive_thread_id = int(match.group(2))
     else:
