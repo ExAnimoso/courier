@@ -1011,6 +1011,21 @@ class Utility(commands.Cog):
 
         return await ctx.send(embed=embed)
 
+    @alias.command(name="plain")
+    @checks.has_permissions(PermissionLevel.MODERATOR)
+    async def alias_plain(self, ctx, *, name: str.lower):
+        """
+        View the plain content of an alias.
+        """
+        val = self.bot.aliases.get(name)
+        if val is None:
+            embed = utils.create_not_found_embed(name, self.bot.aliases.keys(), "Alias")
+            return await ctx.send(embed=embed)
+
+        val = utils.truncate(val[1:-1], 2048)
+      
+        return await ctx.send(content=val)
+
     async def make_alias(self, name, value, action):
         values = utils.parse_alias(value)
         if not values:
