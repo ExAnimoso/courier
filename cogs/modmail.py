@@ -486,11 +486,9 @@ class Modmail(commands.Cog):
         await self.bot.add_reaction(ctx.message, sent_emoji)
 
     async def send_scheduled_close_message(self, ctx, after, silent=False):
-        human_delta = human_timedelta(after.dt)
-
         embed = discord.Embed(
             title="Scheduled close",
-            description=f"This thread will{' silently' if silent else ''} close in {human_delta}.",
+            description=f"This thread will{' silently' if silent else ''} close <t:{int(after.dt.timestamp())}:R>.",
             color=self.bot.error_color,
         )
 
