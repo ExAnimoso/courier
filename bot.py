@@ -1248,6 +1248,16 @@ class ModmailBot(commands.Bot):
 
             if thread:
                 await thread.channel.typing()
+                if thread.close_task is not None:
+                  self.loop.create_task(thread.cancel_closure())
+                  self.loop.create_task(
+                      thread.channel.send(
+                          embed=discord.Embed(
+                              color=self.error_color,
+                              description="Recepient is typing. Scheduled close has been cancelled.",
+                          )
+                      )
+                  )
         else:
             if not self.config.get("mod_typing"):
                 return
