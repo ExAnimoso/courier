@@ -1247,6 +1247,10 @@ class ModmailBot(commands.Bot):
             thread = await self.threads.find(recipient=user)
 
             if thread:
+                member = self.guild.get_member(user.id)
+                if member is None:
+                    return
+
                 await thread.channel.typing()
                 if thread.close_task is not None:
                   self.loop.create_task(thread.cancel_closure())
