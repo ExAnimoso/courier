@@ -915,7 +915,7 @@ class ModmailBot(commands.Bot):
                 await self.add_reaction(message, blocked_emoji)
                 return await message.channel.send(embed=embed)
 
-            if len(message.content) == 0 and len(message.attachments) == 0:
+            if len(message.content) == 0 and len(message.attachments) == 0 and len(message.stickers) == 0:
                 embed = discord.Embed(
                     title=self.config["disabled_new_thread_title"],
                     color=self.error_color,
@@ -945,7 +945,7 @@ class ModmailBot(commands.Bot):
                 await self.add_reaction(message, blocked_emoji)
                 return await message.channel.send(embed=embed)
 
-            if len(message.content) == 0 and len(message.attachments) == 0:
+            if len(message.content) == 0 and len(message.attachments) == 0 and len(message.stickers) == 0:
                 embed = discord.Embed(
                     title=self.config["disabled_new_thread_title"],
                     color=self.error_color,
