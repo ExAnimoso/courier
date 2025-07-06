@@ -1486,13 +1486,14 @@ class ModmailBot(commands.Bot):
                 join_message = "The recipient has joined the server."
             embed = discord.Embed(description=join_message, color=self.mod_color)
             await thread.channel.send(embed=embed)
-            await thread.cancel_closure()
-            await thread.channel.send(
-                embed=discord.Embed(
-                    color=self.error_color,
-                    description="Scheduled close has been cancelled.",
-                )
-            )
+            if thread.close_task is not None:
+              await thread.cancel_closure()
+              await thread.channel.send(
+                  embed=discord.Embed(
+                      color=self.error_color,
+                      description="Scheduled close has been cancelled.",
+                  )
+              )
 
     async def on_message_delete(self, message):
         """Support for deleting linked messages"""
