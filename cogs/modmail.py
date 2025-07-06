@@ -1366,10 +1366,8 @@ class Modmail(commands.Cog):
         Supports attachments and images as well as
         automatically embedding image URLs.
         """
-
-        ctx.message.content = msg
-
         async with ctx.typing():
+            ctx.message.content = msg
             await ctx.thread.reply(ctx.message)
 
     @commands.command(aliases=["formatreply"])
@@ -1387,11 +1385,11 @@ class Modmail(commands.Cog):
         Supports attachments and images as well as
         automatically embedding image URLs.
         """
-        msg = self.bot.formatter.format(
-            msg, channel=ctx.channel, recipient=ctx.thread.recipient, author=ctx.message.author
-        )
-        ctx.message.content = msg
         async with ctx.typing():
+            msg = self.bot.formatter.format(
+                msg, channel=ctx.channel, recipient=ctx.thread.recipient, author=ctx.message.author
+            )
+            ctx.message.content = msg
             await ctx.thread.reply(ctx.message)
 
     @commands.command(aliases=["formatanonreply"])
@@ -1409,11 +1407,11 @@ class Modmail(commands.Cog):
         Supports attachments and images as well as
         automatically embedding image URLs.
         """
-        msg = self.bot.formatter.format(
-            msg, channel=ctx.channel, recipient=ctx.thread.recipient, author=ctx.message.author
-        )
-        ctx.message.content = msg
         async with ctx.typing():
+            msg = self.bot.formatter.format(
+                msg, channel=ctx.channel, recipient=ctx.thread.recipient, author=ctx.message.author
+            )
+            ctx.message.content = msg
             await ctx.thread.reply(ctx.message, anonymous=True)
 
     @commands.command(aliases=["formatplainreply"])
@@ -1431,11 +1429,11 @@ class Modmail(commands.Cog):
         Supports attachments and images as well as
         automatically embedding image URLs.
         """
-        msg = self.bot.formatter.format(
-            msg, channel=ctx.channel, recipient=ctx.thread.recipient, author=ctx.message.author
-        )
-        ctx.message.content = msg
         async with ctx.typing():
+            msg = self.bot.formatter.format(
+                msg, channel=ctx.channel, recipient=ctx.thread.recipient, author=ctx.message.author
+            )
+            ctx.message.content = msg
             await ctx.thread.reply(ctx.message, plain=True)
 
     @commands.command(aliases=["formatplainanonreply"])
@@ -1453,11 +1451,11 @@ class Modmail(commands.Cog):
         Supports attachments and images as well as
         automatically embedding image URLs.
         """
-        msg = self.bot.formatter.format(
-            msg, channel=ctx.channel, recipient=ctx.thread.recipient, author=ctx.message.author
-        )
-        ctx.message.content = msg
         async with ctx.typing():
+            msg = self.bot.formatter.format(
+                msg, channel=ctx.channel, recipient=ctx.thread.recipient, author=ctx.message.author
+            )
+            ctx.message.content = msg
             await ctx.thread.reply(ctx.message, anonymous=True, plain=True)
 
     @commands.command(aliases=["anonreply", "anonymousreply"])
@@ -1473,8 +1471,8 @@ class Modmail(commands.Cog):
         Edit the `anon_username`, `anon_avatar_url`
         and `anon_tag` config variables to do so.
         """
-        ctx.message.content = msg
         async with ctx.typing():
+            ctx.message.content = msg
             await ctx.thread.reply(ctx.message, anonymous=True)
 
     @commands.command(aliases=["plainreply"])
@@ -1487,8 +1485,8 @@ class Modmail(commands.Cog):
         Supports attachments and images as well as
         automatically embedding image URLs.
         """
-        ctx.message.content = msg
         async with ctx.typing():
+            ctx.message.content = msg
             await ctx.thread.reply(ctx.message, plain=True)
 
     @commands.command(aliases=["plainanonreply", "plainanonymousreply"])
@@ -1501,8 +1499,8 @@ class Modmail(commands.Cog):
         Supports attachments and images as well as
         automatically embedding image URLs.
         """
-        ctx.message.content = msg
         async with ctx.typing():
+            ctx.message.content = msg
             await ctx.thread.reply(ctx.message, anonymous=True, plain=True)
 
     @commands.group(invoke_without_command=True)
