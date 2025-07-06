@@ -287,6 +287,11 @@ class Thread:
                 ids[note["_id"]] = str((await self.note(message, persistent=True, thread_creation=True)).id)
 
             await self.bot.api.update_note_ids(ids)
+            
+            await self._channel.send(self.recipient.id)
+            await self._channel.send(f"{self.recipient.id} in:records")
+            await self._channel.send(f"{self.recipient.id} in:mailroom")
+            await self._channel.send(f"{self.recipient.id} in:logbook")
 
         async def activate_auto_triggers():
             if initial_message:

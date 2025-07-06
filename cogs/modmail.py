@@ -1704,11 +1704,6 @@ class Modmail(commands.Cog):
 
         await thread.channel.send(embed=embed)
 
-        await thread.channel.send(u.id)
-        await thread.channel.send(f"{u.id} in:records")
-        await thread.channel.send(f"{u.id} in:mailroom")
-        await thread.channel.send(f"{u.id} in:logbook")
-
         if manual_trigger:
             sent_emoji, _ = await self.bot.retrieve_emoji()
             await self.bot.add_reaction(ctx.message, sent_emoji)
