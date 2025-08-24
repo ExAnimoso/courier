@@ -488,6 +488,7 @@ def get_top_role(member: discord.Member, hoisted=True):
 
 
 async def create_thread_channel(bot, recipient, category, overwrites, *, archive_thread_id=-1, name=None, errors_raised=None, channel_postfix=None, created_by_recepient = False, report = False):
+    name_set = name is not None
     name = name or bot.format_channel_name(recipient, channel_postfix=channel_postfix, created_by_recepient=created_by_recepient, report=report)
     errors_raised = errors_raised or []
 
@@ -520,20 +521,37 @@ async def create_thread_channel(bot, recipient, category, overwrites, *, archive
                 await bot.config.update()
 
             return await create_thread_channel(
-                bot, recipient, fallback, overwrites, errors_raised=errors_raised, created_by_recepient=created_by_recepient, report=report
+                bot, recipient, fallback, overwrites, archive_thread_id=archive_thread_id, name=name, errors_raised=errors_raised, channel_postfix=channel_postfix, created_by_recepient=created_by_recepient, report=report
             )
 
         if "Contains words not allowed" in e.text:
-            # try again but null-discrim (name could be banned)
-            return await create_thread_channel(
-                bot,
-                recipient,
-                category,
-                overwrites,
-                name=bot.format_channel_name(recipient, force_null=True, created_by_recepient=created_by_recepient, report=report),
-                errors_raised=errors_raised,
-                created_by_recepient=created_by_recepient
-            )
+            if name_set:
+                # try again but null-discrim (name could be banned)
+                return await create_thread_channel(
+                    bot,
+                    recipient,
+                    category,
+                    overwrites,
+                    name=bot.format_channel_name(recipient, channel_postfix=channel_postfix, force_null=True, created_by_recepient=created_by_recepient, report=report),
+                    errors_raised=errors_raised,
+                    created_by_recepient=created_by_recepient,
+                    archive_thread_id=archive_thread_id,
+                    channel_postfix=channel_postfix,
+                    report=report
+              )
+            else:
+                # try again but null-discrim (name could be banned)
+                return await create_thread_channel(
+                    bot,
+                    recipient,
+                    category,
+                    overwrites,
+                    name=bot.format_channel_name(recipient, channel_postfix=channel_postfix, display_name_fallback=True, created_by_recepient=created_by_recepient, report=report),
+                    created_by_recepient=created_by_recepient,
+                    archive_thread_id=archive_thread_id,
+                    channel_postfix=channel_postfix,
+                    report=report
+                )
 
         raise
 

@@ -1809,7 +1809,7 @@ class ModmailBot(commands.Bot):
 
         logger.info(f"Deleted {expired_logs.deleted_count} expired logs.")
 
-    def format_channel_name(self, author, exclude_channel=None, force_null=False, channel_postfix=None, created_by_recepient = False, report = False):
+    def format_channel_name(self, author, exclude_channel=None, display_name_fallback=False, force_null=False, channel_postfix=None, created_by_recepient = False, report = False):
         """Sanitises a username for use with text channel names
 
         Placed in main bot class to be extendable to plugins"""
@@ -1817,6 +1817,8 @@ class ModmailBot(commands.Bot):
 
         if force_null:
             name = new_name = "null"
+            if channel_postfix:
+                name = new_name = name + "-" + "".join(l for l in channel_postfix if l not in string.punctuation and l.isprintable()) or "null"
         else:
             if self.config["use_random_channel_name"]:
                 to_hash = self.token.split(".")[-1] + str(author.id)
@@ -1827,14 +1829,11 @@ class ModmailBot(commands.Bot):
             elif self.config["use_timestamp_channel_name"]:
                 name = new_name = author.created_at.isoformat(sep="-", timespec="minutes")
             else:
-                if self.config["use_nickname_channel_name"]:
+                if self.config["use_nickname_channel_name"] or display_name_fallback:
                     author_member = self.guild.get_member(author.id)
                     name = author_member.display_name.lower()
                 else:
                     name = author.name.lower()
-
-                if force_null:
-                    name = "null"
 
                 name = "".join(l for l in name if l not in string.punctuation and l.isprintable()) or "null"
                 if author.discriminator != "0":
