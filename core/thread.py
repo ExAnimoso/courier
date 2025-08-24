@@ -162,7 +162,7 @@ class Thread:
 
         return self._genesis_message
 
-    async def setup(self, *, creator=None, category=None, initial_message=None, report=False):
+    async def setup(self, *, creator=None, category=None, initial_message=None, channel_postfix=None, report=False):
         """Create the thread channel and other io related initialisation tasks"""
         self.bot.dispatch("thread_initiate", self, creator, category, initial_message)
         recipient = self.recipient
@@ -177,7 +177,8 @@ class Thread:
 
         try:
             archive_thread = await create_archive_thread(self.bot, recipient)
-            channel = await create_thread_channel(self.bot, recipient, category, overwrites, archive_thread_id=archive_thread.id if archive_thread else None, created_by_recepient=creator is None, report=report)
+            channel = await create_thread_channel(self.bot, recipient, category, overwrites, archive_thread_id=archive_thread.id if archive_thread else None,
+                                                  channel_postfix=channel_postfix, created_by_recepient=creator is None, report=report)
         except discord.HTTPException as e:  # Failed to create due to missing perms.
             logger.critical("An error occurred while creating a thread.", exc_info=True)
             self.manager.cache.pop(self.id)
@@ -1482,6 +1483,7 @@ class ThreadManager:
         *,
         message: discord.Message = None,
         creator: typing.Union[discord.Member, discord.User] = None,
+        channel_postfix: str = None,
         category: discord.CategoryChannel = None,
         manual_trigger: bool = True,
         report: bool = False,
@@ -1551,7 +1553,7 @@ class ThreadManager:
                 del self.cache[recipient.id]
                 return thread
 
-        self.bot.loop.create_task(thread.setup(creator=creator, category=category, initial_message=message, report=report))
+        self.bot.loop.create_task(thread.setup(creator=creator, category=category, initial_message=message, channel_postfix=channel_postfix, report=report))
         return thread
 
     async def find_or_create(self, recipient) -> Thread:

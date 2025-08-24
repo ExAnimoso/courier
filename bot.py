@@ -1809,7 +1809,7 @@ class ModmailBot(commands.Bot):
 
         logger.info(f"Deleted {expired_logs.deleted_count} expired logs.")
 
-    def format_channel_name(self, author, exclude_channel=None, force_null=False, created_by_recepient = False, report = False):
+    def format_channel_name(self, author, exclude_channel=None, force_null=False, channel_postfix=None, created_by_recepient = False, report = False):
         """Sanitises a username for use with text channel names
 
         Placed in main bot class to be extendable to plugins"""
@@ -1839,6 +1839,10 @@ class ModmailBot(commands.Bot):
                 name = "".join(l for l in name if l not in string.punctuation and l.isprintable()) or "null"
                 if author.discriminator != "0":
                     name += f"-{author.discriminator}"
+
+                if channel_postfix:
+                    name = name + "-" + "".join(l for l in channel_postfix if l not in string.punctuation and l.isprintable()) or "null"
+
                 new_name = name
 
         counter = 1

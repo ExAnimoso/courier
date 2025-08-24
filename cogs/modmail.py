@@ -1629,6 +1629,7 @@ class Modmail(commands.Cog):
         users: commands.Greedy[
             Union[Literal["silent", "silently"], discord.Member, discord.User, discord.Role]
         ],
+        channel_postfix: str = None,
         *,
         category: SimilarCategoryConverter = None,
         manual_trigger=True,
@@ -1717,8 +1718,9 @@ class Modmail(commands.Cog):
         thread = await self.bot.threads.create(
             recipient=users[0],
             creator=creator,
+            channel_postfix=channel_postfix,
             category=category,
-            manual_trigger=manual_trigger,
+            manual_trigger=manual_trigger
         )
 
         if thread.cancelled:
