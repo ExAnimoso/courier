@@ -1563,7 +1563,6 @@ class Modmail(commands.Cog):
 
     @app_commands.command(name="report", description="Send a text message directly to the server staff. Use for serious inquiries.")
     @app_commands.describe(text="Message you are willing to relay to the server staff.")
-    @checks.has_permissions(PermissionLevel.REGULAR)
     async def report(self, ctx: discord.interactions.Interaction, text: str):
         await ctx.response.defer(ephemeral=True)
 
