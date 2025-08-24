@@ -469,6 +469,10 @@ class ModmailBot(commands.Bot):
     def error_color(self) -> int:
         return self.config.get("error_color")
 
+    @property
+    def report_color(self) -> int:
+        return self.config.get("report_color")
+
     def command_perm(self, command_name: str) -> PermissionLevel:
         level = self.config["override_command_level"].get(command_name)
         if level is not None:
@@ -615,6 +619,8 @@ class ModmailBot(commands.Bot):
         self.autoupdate.start()
         self.log_expiry.start()
         self._started = True
+
+        await self.tree.sync()
 
     async def convert_emoji(self, name: str) -> str:
         ctx = SimpleNamespace(bot=self, guild=self.modmail_guild)
@@ -1803,7 +1809,7 @@ class ModmailBot(commands.Bot):
 
         logger.info(f"Deleted {expired_logs.deleted_count} expired logs.")
 
-    def format_channel_name(self, author, exclude_channel=None, force_null=False, created_by_recepient = False):
+    def format_channel_name(self, author, exclude_channel=None, force_null=False, created_by_recepient = False, report = False):
         """Sanitises a username for use with text channel names
 
         Placed in main bot class to be extendable to plugins"""
@@ -1841,7 +1847,9 @@ class ModmailBot(commands.Bot):
             new_name = f"{name}_{counter}"  # multiple channels with same name
             counter += 1
         
-        if created_by_recepient:
+        if report:
+            new_name = "📮" + new_name
+        elif created_by_recepient:
             new_name = "📬" + new_name
         else:
             new_name = "📭" + new_name

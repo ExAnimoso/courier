@@ -162,7 +162,7 @@ class Thread:
 
         return self._genesis_message
 
-    async def setup(self, *, creator=None, category=None, initial_message=None):
+    async def setup(self, *, creator=None, category=None, initial_message=None, report=False):
         """Create the thread channel and other io related initialisation tasks"""
         self.bot.dispatch("thread_initiate", self, creator, category, initial_message)
         recipient = self.recipient
@@ -177,7 +177,7 @@ class Thread:
 
         try:
             archive_thread = await create_archive_thread(self.bot, recipient)
-            channel = await create_thread_channel(self.bot, recipient, category, overwrites, archive_thread_id=archive_thread.id if archive_thread else None, created_by_recepient=creator is None)
+            channel = await create_thread_channel(self.bot, recipient, category, overwrites, archive_thread_id=archive_thread.id if archive_thread else None, created_by_recepient=creator is None, report=report)
         except discord.HTTPException as e:  # Failed to create due to missing perms.
             logger.critical("An error occurred while creating a thread.", exc_info=True)
             self.manager.cache.pop(self.id)
@@ -974,6 +974,7 @@ class Thread:
         plain: bool = False,
         persistent_note: bool = False,
         thread_creation: bool = False,
+        report_message: bool = False
     ) -> None:
         if not note and from_mod:
             self.bot.loop.create_task(self._restart_close_timer())  # Start or restart thread auto close
@@ -1024,8 +1025,12 @@ class Thread:
                     url=f"https://discordapp.com/channels/{self.bot.guild.id}#{message.id}",
                 )
             else:
-                # Normal message
-                name = str(author)
+                if report_message:
+                    # Report message
+                    name = f"Report by {str(author)}"
+                else:
+                    # Normal message
+                    name = str(author)
                 avatar_url = avatar_url
                 embed.set_author(
                     name=name,
@@ -1184,7 +1189,10 @@ class Thread:
             embed.colour = self.bot.main_color
         else:
             embed.set_footer(text=f"{author.id}")
-            embed.colour = self.bot.recipient_color
+            if report_message:
+                embed.colour = self.bot.report_color
+            else:
+                embed.colour = self.bot.recipient_color
 
         if (from_mod or note) and not thread_creation:
             delete_message = not bool(message.attachments)
@@ -1237,6 +1245,8 @@ class Thread:
 
         else:
             msg = await destination.send(mentions, embed=embed, files=files)
+            if report_message:
+                await msg.pin()
 
         if additional_images:
             self.ready = False
@@ -1474,6 +1484,7 @@ class ThreadManager:
         creator: typing.Union[discord.Member, discord.User] = None,
         category: discord.CategoryChannel = None,
         manual_trigger: bool = True,
+        report: bool = False,
     ) -> Thread:
         """Creates a Modmail thread"""
 
@@ -1540,7 +1551,7 @@ class ThreadManager:
                 del self.cache[recipient.id]
                 return thread
 
-        self.bot.loop.create_task(thread.setup(creator=creator, category=category, initial_message=message))
+        self.bot.loop.create_task(thread.setup(creator=creator, category=category, initial_message=message, report=report))
         return thread
 
     async def find_or_create(self, recipient) -> Thread:

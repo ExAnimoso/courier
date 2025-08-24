@@ -112,6 +112,7 @@ class ConfigManager:
         "public_removed_from_group_description_anon": "A moderator has removed {users} from the Modmail thread.",
         # moderation
         "recipient_color": str(discord.Color.gold()),
+        "report_color": str(discord.Color.gold()),
         "mod_color": str(discord.Color.green()),
         "mod_tag": None,
         # anonymous message
@@ -187,7 +188,7 @@ class ConfigManager:
         "data_collection": True,
     }
 
-    colors = {"mod_color", "recipient_color", "main_color", "error_color"}
+    colors = {"mod_color", "recipient_color", "main_color", "error_color", "report_color"}
 
     time_deltas = {"account_age", "guild_age", "thread_auto_close", "thread_cooldown", "log_expiration"}
 

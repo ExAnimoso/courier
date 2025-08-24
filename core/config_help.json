@@ -707,6 +707,21 @@
     ],
     "thumbnail": "https://placehold.it/100/f1c40f?text=+"
   },
+  "report_color": {
+    "default": "Discord Gold [#F1C40F](https://placehold.it/100/f1c40f?text=+)",
+    "description": "This is the color of the messages sent by the recipient through report command, this applies to messages received in the thread channel.",
+    "examples": [
+      "`{prefix}config set recipient_color dark beige`",
+      "`{prefix}config set recipient_color cb7723`",
+      "`{prefix}config set recipient_color #cb7723`",
+      "`{prefix}config set recipient_color c4k`"
+    ],
+    "notes": [
+      "Available color names can be found on [Taki's Blog](https://taaku18.github.io/modmail/colors/).",
+      "See also: `mod_color`, `main_color`, `error_color`."
+    ],
+    "thumbnail": "https://placehold.it/100/f1c40f?text=+"
+  },
   "mod_color": {
     "default": "Discord Green [#2ECC71](https://placehold.it/100/2ecc71?text=+)",
     "description": "This is the color of the messages sent by the moderators, this applies to messages within in the thread channel and the DM thread messages received by the recipient.",

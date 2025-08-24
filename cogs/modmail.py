@@ -10,15 +10,17 @@ from discord.ext.commands.view import StringView
 from discord.ext.commands.cooldowns import BucketType
 from discord.role import Role
 from discord.utils import escape_markdown
+from discord import app_commands
 
 from dateutil import parser
 
 from core import checks
-from core.models import DMDisabled, PermissionLevel, SimilarCategoryConverter, getLogger
+from core.models import DMDisabled, PermissionLevel, SimilarCategoryConverter, DummyMessage, getLogger
 from core.paginator import EmbedPaginatorSession
 from core.thread import Thread
 from core.time import UserFriendlyTime, human_timedelta
 from core.utils import *
+from bot import ModmailBot
 
 logger = getLogger(__name__)
 
@@ -26,7 +28,7 @@ logger = getLogger(__name__)
 class Modmail(commands.Cog):
     """Commands directly related to Modmail functionality."""
 
-    def __init__(self, bot):
+    def __init__(self, bot: ModmailBot):
         self.bot = bot
 
     @commands.command()
@@ -1557,6 +1559,61 @@ class Modmail(commands.Cog):
 
         sent_emoji, _ = await self.bot.retrieve_emoji()
         await self.bot.add_reaction(ctx.message, sent_emoji)
+
+
+    @app_commands.command(name="report", description="Send a text message directly to the server staff. Use for serious inquiries.")
+    @app_commands.describe(text="Message you are willing to relay to the server staff.")
+    @checks.has_permissions(PermissionLevel.REGULAR)
+    async def report(self, ctx: discord.interactions.Interaction, text: str):
+        await ctx.response.defer(ephemeral=True)
+
+        message = DummyMessage(None)
+        message.id = ctx.id
+        message.content = text
+        message.author = ctx.user
+        message.channel = ctx.channel
+        message.created_at = ctx.created_at
+        message.attachments = []
+        message.stickers = []
+
+        blocked = await self.bot.is_blocked(author=ctx.user)
+        if blocked:
+            ctx.followup.send(content=f"You are blocked from submitting reports through the command.")
+            return
+
+        thread = await self.bot.threads.find(recipient=ctx.user)
+        if thread is None:
+            delta = await self.bot.get_thread_cooldown(ctx.user)
+            if delta:
+                ctx.followup.send(content=f"{self.bot.config['cooldown_thread_title']} {self.bot.config['cooldown_thread_response']}")
+                return
+
+            if self.bot.config["dm_disabled"] in (DMDisabled.NEW_THREADS, DMDisabled.ALL_THREADS):
+                ctx.followup.send(content=f"{self.bot.config['disabled_new_thread_title']} {self.bot.config['disabled_new_thread_response']}")
+                logger.info("A new report was blocked from %s due to disabled Modmail.", ctx.user)
+
+            thread = await self.bot.threads.create(ctx.user, message=message, report=True)
+
+        if not thread.cancelled:
+            try:
+                await thread.send(message, report_message=True)
+            except Exception:
+                logger.error("Failed to send message:", exc_info=True)
+                await ctx.followup.send(content=f"Failed to deliver the message. Try again later or message <@{self.bot.user.id}> directly.")
+                return
+            else:
+                for user in thread.recipients:
+                    # send to all other recipients
+                    if user != ctx.user:
+                        try:
+                            await thread.send(message, user)
+                        except Exception:
+                            # silently ignore
+                            logger.error("Failed to send message:", exc_info=True)
+
+                self.bot.dispatch("thread_reply", thread, False, message, False, False)
+
+        await ctx.followup.send(content=f"Your report have been submitted. If you have any additional details to share please message <@{self.bot.user.id}> directly.")
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.REGULAR)
