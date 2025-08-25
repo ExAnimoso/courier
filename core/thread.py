@@ -252,7 +252,7 @@ class Thread:
             )
             embed.title = self.bot.config["thread_creation_title"]
 
-            if creator is None or creator == recipient:
+            if (creator is None or creator == recipient) and not report:
                 msg = await recipient.send(embed=embed)
 
                 if recipient_thread_close:
