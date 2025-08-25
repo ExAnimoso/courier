@@ -1472,7 +1472,10 @@ class ThreadManager:
 
         archive_thread = None
         if archive_thread_id is not None:
-            archive_thread = await self.bot.get_or_fetch_channel(archive_thread_id)
+            try:
+                archive_thread = await self.bot.get_or_fetch_channel(archive_thread_id)
+            except Exception:
+                pass
 
         if recipient is None:
             thread = Thread(self, user_id, channel, archive_thread, other_recipients)

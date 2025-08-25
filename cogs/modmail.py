@@ -2141,7 +2141,11 @@ class Modmail(commands.Cog):
                 for n, uid in enumerate(other_recipients):
                     other_recipients[n] = await self.bot.get_or_fetch_user(uid)
 
-                archive_thread = self.bot.get_or_fetch_channel(archive_thread_id)
+                archive_thread = None
+                try:
+                    archive_thread = await self.bot.get_or_fetch_channel(archive_thread_id)
+                except Exception:
+                    pass
 
                 if user_id != -1:
                     recipient = self.bot.get_user(user_id)
@@ -2194,7 +2198,11 @@ class Modmail(commands.Cog):
                             pass
 
                 archive_thread_id = match_archive_thread_id(ctx.channel.topic)
-                archive_thread = self.bot.get_or_fetch_channel(archive_thread_id)
+                archive_thread = None
+                try:
+                    archive_thread = await self.bot.get_or_fetch_channel(archive_thread_id)
+                except Exception:
+                    pass
 
                 other_recipients = match_other_recipients(ctx.channel.topic)
                 for n, uid in enumerate(other_recipients):
