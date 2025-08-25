@@ -139,7 +139,12 @@ class Thread:
             thread = manager.cache[recipient_id]
         else:
             recipient = await manager.bot.get_or_fetch_user(recipient_id)
-            archive_thread = await manager.bot.get_or_fetch_channel(archive_thread_id)
+            archive_thread = None
+            try:
+                archive_thread = await manager.bot.get_or_fetch_channel(archive_thread_id)
+            except Exception:
+                # Ignore archive search errors
+                pass
 
             other_recipients = []
             for uid in other_ids:
