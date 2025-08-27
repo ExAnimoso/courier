@@ -1563,8 +1563,15 @@ class Modmail(commands.Cog):
 
     @app_commands.command(name="report", description="Send a text message directly to the server staff. Use for serious inquiries.")
     @app_commands.describe(text="Message you are willing to relay to the server staff.")
-    async def report(self, ctx: discord.interactions.Interaction, text: str):
+    @app_commands.describe(receive_reply="Receive a reply from staff (default is no).")
+    @app_commands.choices(receive_reply=[
+        app_commands.Choice(name="yes", value="yes"),
+        app_commands.Choice(name="no", value="no")
+    ])
+    async def report(self, ctx: discord.interactions.Interaction, text: str, receive_reply: str = "no"):
         await ctx.response.defer(ephemeral=True)
+
+        receive_reply_bool = receive_reply == "yes"
 
         message = DummyMessage(None)
         message.id = ctx.id
@@ -1591,11 +1598,11 @@ class Modmail(commands.Cog):
                 ctx.followup.send(content=f"{self.bot.config['disabled_new_thread_title']} {self.bot.config['disabled_new_thread_response']}")
                 logger.info("A new report was blocked from %s due to disabled Modmail.", ctx.user)
 
-            thread = await self.bot.threads.create(ctx.user, message=message, report=True)
+            thread = await self.bot.threads.create(ctx.user, message=message, report=True, receive_reply=receive_reply_bool)
 
         if not thread.cancelled:
             try:
-                await thread.send(message, report_message=True)
+                await thread.send(message, report_message=True, receive_reply=receive_reply_bool)
             except Exception:
                 logger.error("Failed to send message:", exc_info=True)
                 await ctx.followup.send(content=f"Failed to deliver the message. Try again later or message <@{self.bot.user.id}> directly.")

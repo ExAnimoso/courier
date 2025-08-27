@@ -1809,7 +1809,7 @@ class ModmailBot(commands.Bot):
 
         logger.info(f"Deleted {expired_logs.deleted_count} expired logs.")
 
-    def format_channel_name(self, author, exclude_channel=None, display_name_fallback=False, force_null=False, channel_postfix=None, created_by_recepient = False, report = False):
+    def format_channel_name(self, author, exclude_channel=None, display_name_fallback=False, force_null=False, channel_postfix=None, created_by_recepient = False, report = False, receive_reply = False):
         """Sanitises a username for use with text channel names
 
         Placed in main bot class to be extendable to plugins"""
@@ -1850,7 +1850,7 @@ class ModmailBot(commands.Bot):
             new_name = f"{name}_{counter}"  # multiple channels with same name
             counter += 1
         
-        if report:
+        if report and not receive_reply:
             new_name = "📮" + new_name
         elif created_by_recepient:
             new_name = "📬" + new_name

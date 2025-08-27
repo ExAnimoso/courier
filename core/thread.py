@@ -167,7 +167,7 @@ class Thread:
 
         return self._genesis_message
 
-    async def setup(self, *, creator=None, category=None, initial_message=None, channel_postfix=None, report=False):
+    async def setup(self, *, creator=None, category=None, initial_message=None, channel_postfix=None, report=False, receive_reply=False):
         """Create the thread channel and other io related initialisation tasks"""
         self.bot.dispatch("thread_initiate", self, creator, category, initial_message)
         recipient = self.recipient
@@ -183,7 +183,7 @@ class Thread:
         try:
             archive_thread = await create_archive_thread(self.bot, recipient)
             channel = await create_thread_channel(self.bot, recipient, category, overwrites, archive_thread_id=archive_thread.id if archive_thread else None,
-                                                  channel_postfix=channel_postfix, created_by_recepient=creator is None, report=report)
+                                                  channel_postfix=channel_postfix, created_by_recepient=creator is None, report=report, receive_reply=receive_reply)
         except discord.HTTPException as e:  # Failed to create due to missing perms.
             logger.critical("An error occurred while creating a thread.", exc_info=True)
             self.manager.cache.pop(self.id)
@@ -252,7 +252,7 @@ class Thread:
             )
             embed.title = self.bot.config["thread_creation_title"]
 
-            if (creator is None or creator == recipient) and not report:
+            if (creator is None or creator == recipient) and (not report or receive_reply):
                 msg = await recipient.send(embed=embed)
 
                 if recipient_thread_close:
@@ -980,7 +980,8 @@ class Thread:
         plain: bool = False,
         persistent_note: bool = False,
         thread_creation: bool = False,
-        report_message: bool = False
+        report_message: bool = False,
+        receive_reply: bool = False
     ) -> None:
         if not note and from_mod:
             self.bot.loop.create_task(self._restart_close_timer())  # Start or restart thread auto close
@@ -1034,6 +1035,8 @@ class Thread:
                 if report_message:
                     # Report message
                     name = f"Report by {str(author)}"
+                    if receive_reply:
+                        name += ' (reply requested)'
                 else:
                     # Normal message
                     name = str(author)
@@ -1253,6 +1256,11 @@ class Thread:
             msg = await destination.send(mentions, embed=embed, files=files)
             if report_message:
                 await msg.pin()
+            if receive_reply:
+                try:
+                    await self.recipient.send(embed=embed)
+                except Exception:
+                    logger.error("Couldn't send the original report text to the recipient")
 
         if additional_images:
             self.ready = False
@@ -1495,6 +1503,7 @@ class ThreadManager:
         category: discord.CategoryChannel = None,
         manual_trigger: bool = True,
         report: bool = False,
+        receive_reply: bool = False
     ) -> Thread:
         """Creates a Modmail thread"""
 
@@ -1561,7 +1570,7 @@ class ThreadManager:
                 del self.cache[recipient.id]
                 return thread
 
-        self.bot.loop.create_task(thread.setup(creator=creator, category=category, initial_message=message, channel_postfix=channel_postfix, report=report))
+        self.bot.loop.create_task(thread.setup(creator=creator, category=category, initial_message=message, channel_postfix=channel_postfix, report=report, receive_reply=receive_reply))
         return thread
 
     async def find_or_create(self, recipient) -> Thread:
