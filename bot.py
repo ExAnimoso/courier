@@ -470,8 +470,8 @@ class ModmailBot(commands.Bot):
         return self.config.get("error_color")
 
     @property
-    def report_color(self) -> int:
-        return self.config.get("report_color")
+    def ticket_color(self) -> int:
+        return self.config.get("ticket_color")
 
     def command_perm(self, command_name: str) -> PermissionLevel:
         level = self.config["override_command_level"].get(command_name)
@@ -1809,7 +1809,7 @@ class ModmailBot(commands.Bot):
 
         logger.info(f"Deleted {expired_logs.deleted_count} expired logs.")
 
-    def format_channel_name(self, author, exclude_channel=None, display_name_fallback=False, force_null=False, channel_postfix=None, created_by_recepient = False, report = False, receive_reply = False):
+    def format_channel_name(self, author, exclude_channel=None, display_name_fallback=False, force_null=False, channel_postfix=None, created_by_recepient = False, ticket = False, receive_reply = False):
         """Sanitises a username for use with text channel names
 
         Placed in main bot class to be extendable to plugins"""
@@ -1850,7 +1850,7 @@ class ModmailBot(commands.Bot):
             new_name = f"{name}_{counter}"  # multiple channels with same name
             counter += 1
         
-        if report and not receive_reply:
+        if ticket and not receive_reply:
             new_name = "📮" + new_name
         elif created_by_recepient:
             new_name = "📬" + new_name

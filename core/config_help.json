@@ -707,9 +707,9 @@
     ],
     "thumbnail": "https://placehold.it/100/f1c40f?text=+"
   },
-  "report_color": {
+  "ticket_color": {
     "default": "Discord Gold [#F1C40F](https://placehold.it/100/f1c40f?text=+)",
-    "description": "This is the color of the messages sent by the recipient through report command, this applies to messages received in the thread channel.",
+    "description": "This is the color of the messages sent by the recipient through ticket command, this applies to messages received in the thread channel.",
     "examples": [
       "`{prefix}config set recipient_color dark beige`",
       "`{prefix}config set recipient_color cb7723`",

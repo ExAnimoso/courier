@@ -1561,14 +1561,14 @@ class Modmail(commands.Cog):
         await self.bot.add_reaction(ctx.message, sent_emoji)
 
 
-    @app_commands.command(name="report", description="Send a text message directly to the server staff. Use for serious inquiries.")
+    @app_commands.command(name="ticket", description="Send a text message directly to the server staff. Use for serious inquiries.")
     @app_commands.describe(text="Message you are willing to relay to the server staff.")
     @app_commands.describe(receive_reply="Receive a reply from staff (default is no).")
     @app_commands.choices(receive_reply=[
         app_commands.Choice(name="yes", value="yes"),
         app_commands.Choice(name="no", value="no")
     ])
-    async def report(self, ctx: discord.interactions.Interaction, text: str, receive_reply: str = "no"):
+    async def ticket(self, ctx: discord.interactions.Interaction, text: str, receive_reply: str = "no"):
         await ctx.response.defer(ephemeral=True)
 
         receive_reply_bool = receive_reply == "yes"
@@ -1584,7 +1584,7 @@ class Modmail(commands.Cog):
 
         blocked = await self.bot.is_blocked(author=ctx.user)
         if blocked:
-            ctx.followup.send(content=f"You are blocked from submitting reports through the command.")
+            ctx.followup.send(content=f"You are blocked from submitting tickets through the command.")
             return
 
         thread = await self.bot.threads.find(recipient=ctx.user)
@@ -1596,13 +1596,13 @@ class Modmail(commands.Cog):
 
             if self.bot.config["dm_disabled"] in (DMDisabled.NEW_THREADS, DMDisabled.ALL_THREADS):
                 ctx.followup.send(content=f"{self.bot.config['disabled_new_thread_title']} {self.bot.config['disabled_new_thread_response']}")
-                logger.info("A new report was blocked from %s due to disabled Modmail.", ctx.user)
+                logger.info("A new ticket was blocked from %s due to disabled Modmail.", ctx.user)
 
-            thread = await self.bot.threads.create(ctx.user, message=message, report=True, receive_reply=receive_reply_bool)
+            thread = await self.bot.threads.create(ctx.user, message=message, ticket=True, receive_reply=receive_reply_bool)
 
         if not thread.cancelled:
             try:
-                await thread.send(message, report_message=True, receive_reply=receive_reply_bool)
+                await thread.send(message, ticket_message=True, receive_reply=receive_reply_bool)
             except Exception:
                 logger.error("Failed to send message:", exc_info=True)
                 await ctx.followup.send(content=f"Failed to deliver the message. Try again later or message <@{self.bot.user.id}> directly.")
@@ -1619,7 +1619,7 @@ class Modmail(commands.Cog):
 
                 self.bot.dispatch("thread_reply", thread, False, message, False, False)
 
-        await ctx.followup.send(content=f"Your report have been submitted. If you have any additional details to share please message <@{self.bot.user.id}> directly.")
+        await ctx.followup.send(content=f"Your ticket have been submitted. If you have any additional details to share please message <@{self.bot.user.id}> directly.")
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.REGULAR)

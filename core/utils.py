@@ -487,9 +487,9 @@ def get_top_role(member: discord.Member, hoisted=True):
             return role
 
 
-async def create_thread_channel(bot, recipient, category, overwrites, *, archive_thread_id=-1, name=None, errors_raised=None, channel_postfix=None, created_by_recepient = False, report = False, receive_reply=False):
+async def create_thread_channel(bot, recipient, category, overwrites, *, archive_thread_id=-1, name=None, errors_raised=None, channel_postfix=None, created_by_recepient = False, ticket = False, receive_reply=False):
     name_set = name is not None
-    name = name or bot.format_channel_name(recipient, channel_postfix=channel_postfix, created_by_recepient=created_by_recepient, report=report, receive_reply=receive_reply)
+    name = name or bot.format_channel_name(recipient, channel_postfix=channel_postfix, created_by_recepient=created_by_recepient, ticket=ticket, receive_reply=receive_reply)
     errors_raised = errors_raised or []
 
     try:
@@ -521,7 +521,7 @@ async def create_thread_channel(bot, recipient, category, overwrites, *, archive
                 await bot.config.update()
 
             return await create_thread_channel(
-                bot, recipient, fallback, overwrites, archive_thread_id=archive_thread_id, name=name, errors_raised=errors_raised, channel_postfix=channel_postfix, created_by_recepient=created_by_recepient, report=report, receive_reply=receive_reply
+                bot, recipient, fallback, overwrites, archive_thread_id=archive_thread_id, name=name, errors_raised=errors_raised, channel_postfix=channel_postfix, created_by_recepient=created_by_recepient, ticket=ticket, receive_reply=receive_reply
             )
 
         if "Contains words not allowed" in e.text:
@@ -532,12 +532,12 @@ async def create_thread_channel(bot, recipient, category, overwrites, *, archive
                     recipient,
                     category,
                     overwrites,
-                    name=bot.format_channel_name(recipient, channel_postfix=channel_postfix, force_null=True, created_by_recepient=created_by_recepient, report=report, receive_reply=receive_reply),
+                    name=bot.format_channel_name(recipient, channel_postfix=channel_postfix, force_null=True, created_by_recepient=created_by_recepient, ticket=ticket, receive_reply=receive_reply),
                     errors_raised=errors_raised,
                     created_by_recepient=created_by_recepient,
                     archive_thread_id=archive_thread_id,
                     channel_postfix=channel_postfix,
-                    report=report,
+                    ticket=ticket,
                     receive_reply=receive_reply
               )
             else:
@@ -547,11 +547,11 @@ async def create_thread_channel(bot, recipient, category, overwrites, *, archive
                     recipient,
                     category,
                     overwrites,
-                    name=bot.format_channel_name(recipient, channel_postfix=channel_postfix, display_name_fallback=True, created_by_recepient=created_by_recepient, report=report, receive_reply=receive_reply),
+                    name=bot.format_channel_name(recipient, channel_postfix=channel_postfix, display_name_fallback=True, created_by_recepient=created_by_recepient, ticket=ticket, receive_reply=receive_reply),
                     created_by_recepient=created_by_recepient,
                     archive_thread_id=archive_thread_id,
                     channel_postfix=channel_postfix,
-                    report=report,
+                    ticket=ticket,
                     receive_reply=receive_reply
                 )
 
