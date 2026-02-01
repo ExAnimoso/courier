@@ -453,9 +453,16 @@ def normalize_alias(alias, message=""):
 
 def format_description(i, names):
     return "\n".join(
-        ": ".join((str(a + i * 15), b))
+        embolden_on_even(": ".join((str(a + i * 15), b)), a)
         for a, b in enumerate(takewhile(lambda x: x is not None, names), start=1)
     )
+
+
+def embolden_on_even(row, number):
+    if number % 2:
+        return row
+    else:
+        return f'**{row}**'
 
 
 def trigger_typing(func):
