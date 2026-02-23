@@ -87,7 +87,7 @@ class ConfigManager:
         "disabled_current_thread_title": "Not Delivered",
         "disabled_current_thread_response": "We are not accepting any messages.",
         "disabled_current_thread_footer": "Please try again later...",
-        "content_type_disabled_response": "Failed to receive message!\n\nDue to technical limitations, the type of message you've sent is not supported. You may send the content directly with a screenshot or use a message link from the server.",
+        "content_type_disabled_response": "Failed to receive message!\n\nDue to technical limitations the type of message you've sent is not supported. You may send the content directly with a screenshot or use a message link from the server.",
         "transfer_reactions": True,
         "close_on_leave": False,
         "close_on_leave_reason": "The recipient has left the server.",
