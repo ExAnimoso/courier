@@ -1838,6 +1838,14 @@ class Thread:
         """
         files = []
         snap_embeds = []
+        
+        if note:
+            color = self.bot.main_color
+        elif from_mod:
+            color = self.bot.mod_color
+        else:
+            color = self.bot.recipient_color
+
         # Handle notes with Discord-like system message format - return early
         if note:
             destination = destination or self.channel
@@ -1845,7 +1853,7 @@ class Thread:
 
             # Create embed for note with Discord system message style
             embed = discord.Embed(
-                description=content, color=0x5865F2  # Discord blurple color for system messages
+                description=content, color=color  # Discord blurple color for system messages
             )
 
             # Set author with note icon and username
@@ -2004,7 +2012,7 @@ class Thread:
                 icon_url=avatar_url,
                 url=f"https://discordapp.com/users/{author.id}#{message.id}",
             )
-            embed.color = 0x5865F2  # Discord blurple for system messages
+            embed.color = color  # Discord blurple for system messages
 
         # Gracefully breaking existing functionality for the sake of implementing file-oriented attachment handling
         # ext = [(a.url, a.filename, False) for a in message.attachments]
@@ -2111,13 +2119,6 @@ class Thread:
                         embed.add_field(name="Image", value=f"[{filename}]({url})")
                 embedded_image = True
             else:
-                if note:
-                    color = self.bot.main_color
-                elif from_mod:
-                    color = self.bot.mod_color
-                else:
-                    color = self.bot.recipient_color
-
                 img_embed = discord.Embed(color=color)
 
                 if url is not None:
