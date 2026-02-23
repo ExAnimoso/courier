@@ -694,11 +694,11 @@
       "See also: `disabled_current_thread_title`, `disabled_current_thread_response`, `disabled_new_thread_footer`."
     ]
   },
-  "forwards_disabled_response": {
+  "content_type_disabled_response": {
     "default": "Unable to read the message content",
-    "description": "The body of the message embed when Modmail DM has received a message with no available content (usually a forward).",
+    "description": "The body of the message embed when Modmail DM has received a message with no available content (usually a poll).",
     "examples": [
-      "`{prefix}config set forwards_disabled_response Forwarded messages are not working right now.`"
+      "`{prefix}config set content_type_disabled_response Content type is not supported.`"
     ],
     "notes": [
       "See also: `disabled_current_thread_title`, `disabled_current_thread_footer`, `disabled_new_thread_response`."

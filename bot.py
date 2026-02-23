@@ -1175,12 +1175,12 @@ class ModmailBot(commands.Bot):
                 )
                 await self.add_reaction(message, blocked_emoji)
                 return await message.channel.send(embed=embed)
-
-            if len(message.content) == 0 and len(message.attachments) == 0 and len(message.stickers) == 0:
+            if len(message.content) == 0 and len(message.attachments) == 0 and len(message.stickers) == 0 and \
+                not (message.reference and message.reference.type == discord.MessageReferenceType.forward):
                 embed = discord.Embed(
                     title=self.config["disabled_new_thread_title"],
                     color=self.error_color,
-                    description=self.config["forwards_disabled_response"],
+                    description=self.config["content_type_disabled_response"],
                 )
                 embed.set_footer(
                     text=self.config["disabled_new_thread_footer"],
@@ -1212,11 +1212,12 @@ class ModmailBot(commands.Bot):
                 await self.add_reaction(message, blocked_emoji)
                 return await message.channel.send(embed=embed)
 
-            if len(message.content) == 0 and len(message.attachments) == 0 and len(message.stickers) == 0:
+            if len(message.content) == 0 and len(message.attachments) == 0 and len(message.stickers) == 0 and \
+                not (message.reference and message.reference.type == discord.MessageReferenceType.forward):
                 embed = discord.Embed(
                     title=self.config["disabled_new_thread_title"],
                     color=self.error_color,
-                    description=self.config["forwards_disabled_response"],
+                    description=self.config["content_type_disabled_response"],
                 )
                 embed.set_footer(
                     text=self.config["disabled_new_thread_footer"],

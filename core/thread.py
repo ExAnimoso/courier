@@ -1836,6 +1836,8 @@ class Thread:
             Explicit text to use instead of ``message.content``. Provided by refactored
             reply commands to avoid mutating the original message object.
         """
+        files = []
+        snap_embeds = []
         # Handle notes with Discord-like system message format - return early
         if note:
             destination = destination or self.channel
@@ -1921,14 +1923,12 @@ class Thread:
                     and message.reference
                     and message.reference.type == discord.MessageReferenceType.forward
                 ):
-                    try:
-                        original_msg_channel = self.bot.get_channel(message.reference.channel_id)
-                        original_msg = await original_msg_channel.fetch_message(message.reference.message_id)
-                        forwarded_jump_url = original_msg.jump_url
-                    except (discord.NotFound, discord.Forbidden, AttributeError):
-                        pass
+                    forwarded_jump_url = message.reference.jump_url
 
             content = f"📨 **Forwarded message:**\n{content}" if content else "📨 **Forwarded message:**"
+            for i in snap.attachments:
+              files.append(await i.to_file())
+            snap_embeds = snap.embeds
         else:
             # Only show "No content" if there's truly no content (no text, attachments, embeds, or stickers)
             if (
@@ -2009,7 +2009,6 @@ class Thread:
         # Gracefully breaking existing functionality for the sake of implementing file-oriented attachment handling
         # ext = [(a.url, a.filename, False) for a in message.attachments]
         ext = []
-        files = []
         for i in message.attachments:
           files.append(await i.to_file())
 
@@ -2289,6 +2288,9 @@ class Thread:
         if not from_mod and not note:
             archive_message = await self.bot.archive_logger.archive_message_copy(self._archive_thread, msg)
             self.bot.loop.create_task(self.bot.api.append_log(message, channel_id=self.channel.id, attachments=archive_message.attachments if archive_message else None))
+        if snap_embeds:
+            additional_embeds_message = await destination.send(content="> Additional embeds attached to the forward:", embeds=snap_embeds)
+            await self.bot.archive_logger.archive_message_copy(self._archive_thread, additional_embeds_message)
         return msg
 
     async def handle_ticket_message(self, msg, embed, ticket_message: bool, receive_reply: bool):
