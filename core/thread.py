@@ -1962,9 +1962,6 @@ class Thread:
             embed.add_field(name="Context", value=f"- {forwarded_jump_url}", inline=True)
 
         if not note:
-            avatar_url = self.bot.config["anon_avatar_url"]
-            if avatar_url is None:
-                avatar_url = self.bot.get_guild_icon(guild=self.bot.guild, size=128)
             if anonymous and from_mod and not isinstance(destination, discord.TextChannel):
                 # Anonymously sending to the user.
                 tag = self.bot.config["mod_tag"]
@@ -1973,6 +1970,9 @@ class Thread:
                 name = self.bot.config["anon_username"]
                 if name is None:
                     name = "Anonymous"
+                avatar_url = self.bot.config["anon_avatar_url"]
+                if avatar_url is None:
+                    avatar_url = self.bot.get_guild_icon(guild=self.bot.guild, size=128)
                 embed.set_author(
                     name=name,
                     icon_url=avatar_url,
