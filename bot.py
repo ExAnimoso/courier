@@ -1592,11 +1592,64 @@ class ModmailBot(commands.Bot):
                     # from the sent message as reply text while still preserving attachments.
                     await thread.reply(message, message.content, anonymous=anonymous, plain=plain)
                 else:
-                    archive_message = await self.archive_logger.log_internal_message(thread._archive_thread, message)
-                    await self.api.append_log(message, type_="internal", attachments=archive_message.attachments if archive_message else None)
+                    if message.reference and message.reference.type == discord.MessageReferenceType.forward and thread._archive_thread:
+                        embed, files, snap_embeds = await self.create_forward_embed(message)
+                        archive_message = await thread._archive_thread.send(embed=embed, files=files)
+                        if snap_embeds:
+                          await thread._archive_thread.send("> Additional embeds attached to the forward:", embeds=snap_embeds)
+                        await self.api.append_log(message, type_="internal", attachments=archive_message.attachments if archive_message else None)
+                    else:
+                        archive_message = await self.archive_logger.log_internal_message(thread._archive_thread, message)
+                        await self.api.append_log(message, type_="internal", attachments=archive_message.attachments if archive_message else None)
             elif ctx.invoked_with:
                 exc = commands.CommandNotFound('Command "{}" is not found'.format(ctx.invoked_with))
                 self.dispatch("command_error", ctx, exc)
+    
+    
+    async def create_forward_embed(self, message): 
+        if not (hasattr(message, "message_snapshots") and len(message.message_snapshots) > 0):
+            return None
+        files = []
+        snap = message.message_snapshots[0]
+        # Only show "No content" if there's truly no content (no text, attachments, embeds, or stickers)
+        if not snap.content and not message.attachments and not message.embeds and not message.stickers:
+            content = "No content"
+        else:
+            content = snap.content or ""
+
+        # Get jump_url from cached_message, fetch if not cached
+        if hasattr(snap, "cached_message") and snap.cached_message is not None:
+            forwarded_jump_url = snap.cached_message.jump_url
+        else:
+            if (
+                hasattr(message, "reference")
+                and message.reference
+                and message.reference.type == discord.MessageReferenceType.forward
+            ):
+                forwarded_jump_url = message.reference.jump_url
+
+        content = f"📨 **Internal forwarded message:**\n{content}" if content else "📨 **Forwarded message:**"
+        for i in snap.attachments:
+          files.append(await i.to_file())
+        snap_embeds = snap.embeds
+        embed = discord.Embed(description=content, color=self.main_color)
+        
+        author = message.author
+        member = self.guild.get_member(author.id)
+        if member:
+            avatar_url = member.display_avatar.url
+        else:
+            avatar_url = author.display_avatar.url
+  
+        embed.set_author(
+            name=str(message.author),
+            icon_url=avatar_url,
+            url=f"https://discordapp.com/channels/{self.guild.id}#{message.id}",
+        )
+
+        embed.add_field(name="Context", value=f"- {forwarded_jump_url}", inline=True)
+
+        return embed, files, snap_embeds
 
     async def on_typing(self, channel, user, _):
         await self.wait_for_connected()
