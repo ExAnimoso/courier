@@ -19,6 +19,7 @@ import discord
 from discord.enums import ActivityType, Status
 from discord.ext import commands, tasks
 from discord.ext.commands.view import StringView
+from discord import app_commands
 
 from aiohttp import ClientResponseError
 from packaging.version import Version
@@ -2270,6 +2271,28 @@ class Utility(commands.Cog):
                         await ctx.send(f"```py\n{page}\n```")
 
         await self.bot.add_reaction(ctx.message, "\u2705")
+
+
+    @app_commands.command(name="mediapoke", description="Send an anonymous text message discouraging people from sending excessive media content.")
+    @app_commands.describe(member="A person to ping with the poke.")
+    async def mediapoke(self, ctx: discord.interactions.Interaction, member: discord.Member = None):
+        await ctx.response.send_message(content="Handling", ephemeral=True)
+        message_content = ""
+        if member:
+            message_content += f"<@{member.id}> "
+        message_content += self.bot.config["mediapoke_message"]
+        message = await ctx.channel.send(message_content)
+
+        logbook_id = self.bot.config["logbook_id"]
+        if logbook_id:
+            logbook_channel = self.bot.modmail_guild.get_channel(int(logbook_id))
+            logbook_message = f"Mediapoke in {message.jump_url}: Helper: <@{ctx.user.id}> / `{ctx.user.id}`"
+            if member:
+                logbook_message += f", receiving member: <@{member.id}> / `{member.id}`"
+            else:
+                logbook_message += ", general statement"
+            await logbook_channel.send(logbook_message)
+        await ctx.delete_original_response()
 
 
 async def setup(bot):

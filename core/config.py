@@ -166,6 +166,9 @@ class ConfigManager:
         "thread_creation_menu_embed_large_image": False,
         "thread_creation_menu_embed_footer_icon_url": None,
         "thread_creation_menu_embed_color": str(discord.Color.green()),
+        # additional properties
+        "mediapoke_message": "Reminder to avoid posting memes/screenshots that are unrelated to the current conversation, as it is disruptive to others trying to chat.",
+        "logbook_id": None
     }
 
     private_keys = {

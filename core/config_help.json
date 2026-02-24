@@ -1628,5 +1628,13 @@
     "notes": [
       "Color names map to the built-in palette (e.g., 'red', 'green', 'blurple')."
     ]
+  },
+  "mediapoke_message": {
+    "default": "Reminder to avoid posting memes/screenshots that are unrelated to the current conversation, as it is disruptive to others trying to chat.",
+    "description": "Anonymous message to send in order to discourage people from posting excessive media."
+  },
+  "logbook_id": {
+    "default": "None",
+    "description": "Logbook channel id for general logging purposes."
   }
 }
