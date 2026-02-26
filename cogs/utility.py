@@ -2291,7 +2291,7 @@ class Utility(commands.Cog):
                 logbook_message += f", receiving member: <@{member.id}> / `{member.id}`"
             else:
                 logbook_message += ", general statement"
-            await logbook_channel.send(logbook_message)
+            await logbook_channel.send(logbook_message, allowed_mentions=discord.AllowedMentions.none())
         await ctx.delete_original_response()
 
 
