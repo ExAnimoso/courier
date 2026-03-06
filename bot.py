@@ -2081,19 +2081,26 @@ class ModmailBot(commands.Bot):
                 )
             )
         elif isinstance(exception, commands.CheckFailure):
+            permission_check = [check for check in context.command.checks if hasattr(check, "permission_level")]
+            permission_check = permission_check[0] if len(permission_check) > 0 else None
+            if permission_check and await permission_check(context):
+                print_fail_msg = True
+            else:
+                print_fail_msg = False
+                corrected_permission_level = self.command_perm(context.command.qualified_name)
+                logger.warning(
+                    "User %s does not have permission to use this command: `%s` (%s).",
+                    context.author.name,
+                    context.command.qualified_name,
+                    corrected_permission_level.name,
+                )
             for check in context.command.checks:
                 if not await check(context):
-                    if hasattr(check, "fail_msg"):
+                    if hasattr(check, "permission_level"):
+                        continue
+                    if hasattr(check, "fail_msg") and print_fail_msg:
                         await context.send(
                             embed=discord.Embed(color=self.error_color, description=check.fail_msg)
-                        )
-                    if hasattr(check, "permission_level"):
-                        corrected_permission_level = self.command_perm(context.command.qualified_name)
-                        logger.warning(
-                            "User %s does not have permission to use this command: `%s` (%s).",
-                            context.author.name,
-                            context.command.qualified_name,
-                            corrected_permission_level.name,
                         )
             logger.warning("CheckFailure: %s", exception)
         elif isinstance(exception, commands.DisabledCommand):
