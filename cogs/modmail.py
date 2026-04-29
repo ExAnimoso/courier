@@ -2365,6 +2365,7 @@ class Modmail(commands.Cog):
 
         # find genesis message to retrieve User ID
         async for message in ctx.channel.history(limit=10, oldest_first=True):
+            logger.debug(f'{message.id}, condition={message.author == self.bot.user and message.embeds and message.embeds[0].color and message.embeds[0].color.value == self.bot.main_color and message.embeds[0].footer.text}')
             if (
                 message.author == self.bot.user
                 and message.embeds
