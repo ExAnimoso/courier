@@ -1594,13 +1594,11 @@ class ModmailBot(commands.Bot):
                 else:
                     if message.reference and message.reference.type == discord.MessageReferenceType.forward and thread._archive_thread:
                         embed, files, snap_embeds = await self.create_forward_embed(message)
-                        archive_message = await thread._archive_thread.send(embed=embed, files=files)
+                        await thread._archive_thread.send(embed=embed, files=files)
                         if snap_embeds:
                           await thread._archive_thread.send("> Additional embeds attached to the forward:", embeds=snap_embeds)
-                        await self.api.append_log(message, type_="internal", attachments=archive_message.attachments if archive_message else None)
                     else:
-                        archive_message = await self.archive_logger.log_internal_message(thread._archive_thread, message)
-                        await self.api.append_log(message, type_="internal", attachments=archive_message.attachments if archive_message else None)
+                        await self.archive_logger.log_internal_message(thread._archive_thread, message)
             elif ctx.invoked_with:
                 exc = commands.CommandNotFound('Command "{}" is not found'.format(ctx.invoked_with))
                 self.dispatch("command_error", ctx, exc)
