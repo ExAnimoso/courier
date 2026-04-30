@@ -1196,8 +1196,15 @@ class Thread:
             if self.bot.config.get("show_log_url_button") and log_url:
                 view = discord.ui.View()
                 view.add_item(discord.ui.Button(label="See Courier Log", url=log_url, style=discord.ButtonStyle.url))
-            log_destination = self._archive_thread or self.bot.log_channel
-            tasks.append(log_destination.send(embed=embed, view=view))
+            async def log_destination_send_task():
+                try:
+                    log_destination = self._archive_thread or self.bot.log_channel
+                    await log_destination.send(embed=embed, view=view)
+                    return
+                except discord.NotFound:
+                    pass
+                await self.bot.log_channel.send(embed=embed, view=view)
+            tasks.append(log_destination_send_task())
 
         # Thread closed message
 
@@ -1771,7 +1778,7 @@ class Thread:
 
             if msg is not None:
                 async def logging_task():
-                  archive_message = await self.bot.archive_logger.archive_message_copy(self._archive_thread, msg)
+                  archive_message = await self.bot.archive_logger.archive_message_copy(self._archive_thread, msg) or msg
                   await self.bot.api.append_log(
                       message,
                       message_id=msg.id,
@@ -2287,7 +2294,7 @@ class Thread:
             self.ready = True
         
         if not from_mod and not note:
-            archive_message = await self.bot.archive_logger.archive_message_copy(self._archive_thread, msg)
+            archive_message = await self.bot.archive_logger.archive_message_copy(self._archive_thread, msg) or msg
             self.bot.loop.create_task(self.bot.api.append_log(message, channel_id=self.channel.id, attachments=archive_message.attachments if archive_message else None))
         if snap_embeds:
             additional_embeds_message = await destination.send(content="> Additional embeds attached to the forward:", embeds=snap_embeds)

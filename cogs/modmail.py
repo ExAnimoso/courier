@@ -2372,7 +2372,7 @@ class Modmail(commands.Cog):
                 and message.embeds[0].color.value == self.bot.main_color
                 and message.embeds[0].footer.text
             ):
-                user_id = match_user_id(message.embeds[0].footer.text, any_string=True)
+                user_id = match_plain_user_id(message.embeds[0].footer.text, any_string=True)
                 archive_thread_id = match_archive_thread_id(ctx.channel.topic)
                 other_recipients = match_other_recipients(ctx.channel.topic)
                 for n, uid in enumerate(other_recipients):
@@ -2408,7 +2408,7 @@ class Modmail(commands.Cog):
         if m is not None:
             users = set(
                 filter(
-                    lambda member: member.name == m.group(1)
+                    lambda member: member.name == m.group(1)[1:]
                     and (member.discriminator == "0" or member.discriminator == m.group(2)),
                     ctx.guild.members,
                 )

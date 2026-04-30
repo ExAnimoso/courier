@@ -27,6 +27,7 @@ __all__ = [
     "parse_channel_topic",
     "match_title",
     "match_user_id",
+    "match_plain_user_id",
     "match_archive_thread_id",
     "match_other_recipients",
     "create_thread_channel",
@@ -257,6 +258,7 @@ TOPIC_REGEX = re.compile(
     r"(?:\nOther Recipients:\s*(?P<other_ids>\d{17,21}(?:(?:\s*,\s*)\d{17,21})*)\b)?",
     flags=re.IGNORECASE | re.DOTALL,
 )
+PLAIN_UID_REGEX = re.compile(r"(\d{17,21})", flags=re.IGNORECASE)
 UID_REGEX = re.compile(r"\bUser ID:\s*(\d{17,21})\b", flags=re.IGNORECASE)
 ARCHIVE_THREAD_ID_REGEX = re.compile(r"\Archive:\s*(\d{17,21})\b", flags=re.IGNORECASE)
 
@@ -340,6 +342,33 @@ def match_user_id(text: str, any_string: bool = False) -> int:
     user_id = -1
     if any_string:
         match = UID_REGEX.search(text)
+        if match is not None:
+            user_id = int(match.group(1))
+    else:
+        user_id = parse_channel_topic(text)[1]
+
+    return user_id
+
+def match_plain_user_id(text: str, any_string: bool = False) -> int:
+    """
+    Matches a user ID in the format of "User ID: 12345".
+
+    Parameters
+    ----------
+    text : str
+        The text of the user ID.
+    any_string: bool
+        Whether to search any string that matches the UID_REGEX, e.g. not from channel topic.
+        Defaults to False.
+
+    Returns
+    -------
+    int
+        The user ID if found. Otherwise, -1.
+    """
+    user_id = -1
+    if any_string:
+        match = PLAIN_UID_REGEX.search(text)
         if match is not None:
             user_id = int(match.group(1))
     else:
