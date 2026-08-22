@@ -533,6 +533,7 @@ class MongoDBClient(ApiClient):
         logger.line("debug")
 
     async def get_user_logs(self, user_id: Union[str, int]) -> list:
+        return []
         query = {"recipient.id": str(user_id), "guild_id": str(self.bot.guild_id)}
         projection = {"messages": {"$slice": 5}}
         logger.debug("Retrieving user %s logs.", user_id)
@@ -540,6 +541,7 @@ class MongoDBClient(ApiClient):
         return await self.logs.find(query, projection).to_list(None)
 
     async def find_log_entry(self, key: str) -> list:
+        return []
         query = {"key": key}
         projection = {"messages": {"$slice": 5}}
         logger.debug(f"Retrieving log ID {key}.")
@@ -547,6 +549,7 @@ class MongoDBClient(ApiClient):
         return await self.logs.find(query, projection).to_list(None)
 
     async def get_latest_user_logs(self, user_id: Union[str, int]):
+        return None
         query = {
             "recipient.id": str(user_id),
             "guild_id": str(self.bot.guild_id),
@@ -558,6 +561,7 @@ class MongoDBClient(ApiClient):
         return await self.logs.find_one(query, projection, limit=1, sort=[("closed_at", -1)])
 
     async def get_responded_logs(self, user_id: Union[str, int]) -> list:
+        return []
         query = {
             "open": False,
             "messages": {
@@ -571,14 +575,17 @@ class MongoDBClient(ApiClient):
         return await self.logs.find(query).to_list(None)
 
     async def get_open_logs(self) -> list:
+        return []
         query = {"open": True}
         return await self.logs.find(query).to_list(None)
 
     async def get_log(self, channel_id: Union[str, int]) -> dict:
+        return None
         logger.debug("Retrieving channel %s logs.", channel_id)
         return await self.logs.find_one({"channel_id": str(channel_id)})
 
     async def get_log_link(self, channel_id: Union[str, int]) -> str:
+        return None
         doc = await self.get_log(channel_id)
         logger.debug("Retrieving log link for channel %s.", channel_id)
         prefix = self.bot.config["log_url_prefix"].strip("/")
@@ -587,6 +594,7 @@ class MongoDBClient(ApiClient):
         return f"{self.bot.config['log_url'].strip('/')}{'/' + prefix if prefix else ''}/{doc['key']}"
 
     async def create_log_entry(self, recipient: Member, channel: TextChannel, creator: Member, archive_thread: TextChannel = None) -> str:
+        return None
         key = secrets.token_hex(6)
 
         await self.logs.insert_one(
@@ -625,6 +633,7 @@ class MongoDBClient(ApiClient):
         return f"{self.bot.config['log_url'].strip('/')}{'/' + prefix if prefix else ''}/{key}"
 
     async def delete_log_entry(self, key: str) -> bool:
+        return False
         result = await self.logs.delete_one({"key": key})
         return result.deleted_count == 1
 
@@ -650,6 +659,7 @@ class MongoDBClient(ApiClient):
             return await self.db.config.update_one({"bot_id": self.bot.user.id}, {"$unset": unset})
 
     async def edit_message(self, message_id: Union[int, str], new_content: str) -> None:
+        return None
         await self.logs.update_one(
             {"messages.message_id": str(message_id)},
             {"$set": {"messages.$.content": new_content, "messages.$.edited": True}},
@@ -664,6 +674,7 @@ class MongoDBClient(ApiClient):
         type_: str = "thread_message",
         attachments = None,
     ) -> dict:
+        return None
         channel_id = str(channel_id) or str(message.channel.id)
         message_id = str(message_id) or str(message.id)
 
@@ -700,11 +711,13 @@ class MongoDBClient(ApiClient):
         )
 
     async def post_log(self, channel_id: Union[int, str], data: dict) -> dict:
+        return None
         return await self.logs.find_one_and_update(
             {"channel_id": str(channel_id)}, {"$set": data}, return_document=True
         )
 
     async def search_closed_by(self, user_id: Union[int, str]):
+        return []
         return await self.logs.find(
             {
                 "guild_id": str(self.bot.guild_id),
