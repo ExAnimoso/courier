@@ -15,12 +15,12 @@ class ArchiveThreadLogger:
     async def log_note_message(self, thread: Thread, message: Message) -> Message:
         if thread is None:
             return None
-        return await thread.send(f"**Note made by {message.author.name}:**\n> {message.content}")
+        return await thread.send(f"**Note made by {message.author.name}:**\n> {message.content}", allowed_mentions=AllowedMentions.none())
     
     async def log_staff_message(self, thread: Thread, message: Message) -> Message:
         if thread is None:
             return None
-        return await thread.send(message)
+        return await thread.send(message, allowed_mentions=AllowedMentions.none())
     
     async def log_internal_message(self, thread: Thread, message: Message) -> Message:
         if thread is None:
@@ -95,7 +95,7 @@ class ArchiveThreadLogger:
             color=self.bot.error_color,
             timestamp=discord.utils.utcnow())
         try:
-          await thread.send(embed=embed)
+          await thread.send(embed=embed, allowed_mentions=AllowedMentions.none())
         except discord.NotFound:
             pass
     
@@ -113,7 +113,7 @@ class ArchiveThreadLogger:
               content=message.content,
               embeds=message.embeds,
               files=files,
-              allowed_mentions=False
+              allowed_mentions=AllowedMentions.none()
           )
         except discord.NotFound:
             pass
