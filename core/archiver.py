@@ -112,7 +112,8 @@ class ArchiveThreadLogger:
           return await thread.send(
               content=message.content,
               embeds=message.embeds,
-              files=files
+              files=files,
+              allowed_mentions=False
           )
         except discord.NotFound:
             pass

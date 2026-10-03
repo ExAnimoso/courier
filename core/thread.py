@@ -1199,7 +1199,7 @@ class Thread:
             async def log_destination_send_task():
                 try:
                     log_destination = self._archive_thread or self.bot.log_channel
-                    await log_destination.send(embed=embed, view=view)
+                    await log_destination.send(embed=embed, view=view, allowed_mentions=False)
                     return
                 except discord.NotFound:
                     pass
