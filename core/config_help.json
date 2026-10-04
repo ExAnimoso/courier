@@ -1631,10 +1631,18 @@
   },
   "mediapoke_message": {
     "default": "Reminder to avoid posting memes/screenshots that are unrelated to the current conversation, as it is disruptive to others trying to chat.",
-    "description": "Anonymous message to send in order to discourage people from posting excessive media."
+    "description": "Anonymous message to send in order to discourage people from posting excessive media.",
+    "examples": [
+    ],
+    "notes": [
+    ]
   },
   "logbook_id": {
     "default": "None",
-    "description": "Logbook channel id for general logging purposes."
+    "description": "Logbook channel id for general logging purposes.",
+    "examples": [
+    ],
+    "notes": [
+    ]
   }
 }
