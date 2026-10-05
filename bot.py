@@ -1384,9 +1384,12 @@ class ModmailBot(commands.Bot):
         invoker = None
 
         if self.config.get("use_regex_autotrigger"):
-            trigger = next(filter(lambda x: re.search(x, message.content), self.auto_triggers.keys()))
+            content = message.content
+            if content:
+                content = content.lower()
+            trigger = next(filter(lambda x: re.search(x, content), self.auto_triggers.keys()))
             if trigger:
-                invoker = re.search(trigger, message.content).group(0)
+                invoker = re.search(trigger, content).group(0)
         else:
             trigger = next(
                 filter(
