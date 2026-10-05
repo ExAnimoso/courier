@@ -1740,12 +1740,11 @@ class Modmail(commands.Cog):
 
         receive_reply_bool = receive_reply == "yes"
 
-        message = DummyMessage(None)
+        message = await ctx.original_response()
         message.id = ctx.id
         message.content = text
         message.author = ctx.user
         message.channel = ctx.channel
-        message.created_at = ctx.created_at
         message.attachments = []
         message.stickers = []
 
