@@ -1,5 +1,5 @@
-import secrets
 import sys
+import math
 from json import JSONDecodeError
 from typing import Any, Dict, Union, Optional
 
@@ -349,6 +349,10 @@ class ApiClient:
     def logs(self):
         return self.db.logs
 
+    @property
+    def log_thread_index(self):
+        return self.db.log_thread_index
+
     async def setup_indexes(self):
         return NotImplemented
 
@@ -402,7 +406,7 @@ class ApiClient:
     ) -> dict:
         return NotImplemented
 
-    async def post_log(self, channel_id: Union[int, str], data: dict) -> dict:
+    async def post_log(self, user_id: Union[int, str], thread_id: Union[int, str], created_at: discord.datetime) -> dict:
         return NotImplemented
 
     async def search_closed_by(self, user_id: Union[int, str]):
@@ -533,12 +537,11 @@ class MongoDBClient(ApiClient):
         logger.line("debug")
 
     async def get_user_logs(self, user_id: Union[str, int]) -> list:
-        return []
-        query = {"recipient.id": str(user_id), "guild_id": str(self.bot.guild_id)}
-        projection = {"messages": {"$slice": 5}}
+        query = {"user_id": str(user_id)}
         logger.debug("Retrieving user %s logs.", user_id)
 
-        return await self.logs.find(query, projection).to_list(None)
+        result = await self.log_thread_index.find_one(query)
+        return result["threads"] if result else []
 
     async def find_log_entry(self, key: str) -> list:
         return []
@@ -593,44 +596,20 @@ class MongoDBClient(ApiClient):
             prefix = ""
         return f"{self.bot.config['log_url'].strip('/')}{'/' + prefix if prefix else ''}/{doc['key']}"
 
-    async def create_log_entry(self, recipient: Member, channel: TextChannel, creator: Member, archive_thread: TextChannel = None) -> str:
-        return None
-        key = secrets.token_hex(6)
-
-        await self.logs.insert_one(
+    async def create_log_entry(self, recipient: Member):
+        self.log_thread_index.update_one(
             {
-                "_id": key,
-                "key": key,
-                "open": True,
-                "created_at": str(discord.utils.utcnow()),
-                "closed_at": None,
-                "channel_id": str(channel.id),
-                "archive_thread_id": str(archive_thread.id) if archive_thread else None,
-                "guild_id": str(self.bot.guild_id),
-                "bot_id": str(self.bot.user.id),
-                "recipient": {
-                    "id": str(recipient.id),
-                    "name": recipient.name,
-                    "discriminator": recipient.discriminator,
-                    "avatar_url": recipient.display_avatar.url if recipient.display_avatar else None,
-                    "mod": False,
-                },
-                "creator": {
-                    "id": str(creator.id),
-                    "name": creator.name,
-                    "discriminator": creator.discriminator,
-                    "avatar_url": creator.display_avatar.url if creator.display_avatar else None,
-                    "mod": isinstance(creator, Member),
-                },
-                "closer": None,
-                "messages": [],
-            }
+                "user_id": str(recipient.id)
+            },
+            {
+                "$setOnInsert": {
+                    "user_id": str(recipient.id),
+                    "threads": []
+                }
+            },
+            upsert=True
         )
-        logger.debug("Created a log entry, key %s.", key)
-        prefix = self.bot.config["log_url_prefix"].strip("/")
-        if prefix == "NONE":
-            prefix = ""
-        return f"{self.bot.config['log_url'].strip('/')}{'/' + prefix if prefix else ''}/{key}"
+        logger.debug("Created a log entry, user_id %s.", recipient.id)
 
     async def delete_log_entry(self, key: str) -> bool:
         return False
@@ -710,11 +689,8 @@ class MongoDBClient(ApiClient):
             return_document=True,
         )
 
-    async def post_log(self, channel_id: Union[int, str], data: dict) -> dict:
-        return None
-        return await self.logs.find_one_and_update(
-            {"channel_id": str(channel_id)}, {"$set": data}, return_document=True
-        )
+    async def post_log(self, user_id: Union[int, str], thread_id: Union[int, str], created_at: discord.datetime):
+        self.log_thread_index.update_one({"user_id": str(user_id)}, {"$push": {"threads": {"thread_id": str(thread_id), "created_at": math.ceil(created_at.timestamp())}}})
 
     async def search_closed_by(self, user_id: Union[int, str]):
         return []
@@ -728,6 +704,7 @@ class MongoDBClient(ApiClient):
         ).to_list(None)
 
     async def search_by_text(self, text: str, limit: Optional[int]):
+        return []
         return await self.bot.db.logs.find(
             {
                 "guild_id": str(self.bot.guild_id),
@@ -736,6 +713,14 @@ class MongoDBClient(ApiClient):
             },
             {"messages": {"$slice": 5}},
         ).to_list(limit)
+
+    async def save_log_thread_index(self, log_thread_index: dict):
+        await self.db.log_thread_index.delete_many({})
+        for user_id, threads in log_thread_index.items():
+            await self.db.log_thread_index.insert_one({
+                "user_id": user_id,
+                "threads": threads
+            })
 
     async def create_note(self, recipient: Member, message: Message, message_id: Union[int, str]):
         await self.db.notes.insert_one(

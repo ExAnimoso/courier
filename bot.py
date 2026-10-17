@@ -605,33 +605,6 @@ class ModmailBot(commands.Bot):
                 auto_close=items.get("auto_close", False),
             )
 
-        for log in await self.api.get_open_logs():
-            if log.get("channel_id") is None or self.get_channel(int(log["channel_id"])) is None:
-                logger.debug("Unable to resolve thread with channel %s.", log["channel_id"])
-                log_data = await self.api.post_log(
-                    log["channel_id"],
-                    {
-                        "open": False,
-                        "title": None,
-                        "closed_at": str(discord.utils.utcnow()),
-                        "close_message": "Channel has been deleted, no closer found.",
-                        "closer": {
-                            "id": str(self.user.id),
-                            "name": self.user.name,
-                            "discriminator": self.user.discriminator,
-                            "avatar_url": self.user.display_avatar.url,
-                            "mod": True,
-                        },
-                    },
-                )
-                if log_data:
-                    logger.debug("Successfully closed thread with channel %s.", log["channel_id"])
-                else:
-                    logger.debug(
-                        "Failed to close thread with channel %s, skipping.",
-                        log["channel_id"],
-                    )
-
         other_guilds = [guild for guild in self.guilds if guild not in {self.guild, self.modmail_guild}]
         if any(other_guilds):
             logger.warning(

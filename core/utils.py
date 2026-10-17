@@ -122,6 +122,8 @@ def format_preview(messages: typing.List[typing.Dict[str, typing.Any]]):
     str
         A formatted string preview.
     """
+    return
+
     messages = messages[:3]
     out = ""
     for message in messages:

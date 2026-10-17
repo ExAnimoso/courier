@@ -490,7 +490,7 @@ class Thread:
                 log_count = None
                 try:
                     logs = await self.bot.api.get_user_logs(self.id)
-                    log_count = sum(1 for log in logs if not log.get("open"))
+                    log_count = len(logs)
                 except Exception:
                     log_count = None
                 # Resolve recipient object
@@ -834,13 +834,13 @@ class Thread:
                 self._archive_thread = archive_thread
 
         try:
-            log_url, log_data, _ = await asyncio.gather(
+            _, log_data, _ = await asyncio.gather(
                 self.bot.api.create_log_entry(recipient, channel, creator or recipient),
                 self.bot.api.get_user_logs(recipient.id),
                 self.bot.archive_logger.log_thread_start(recipient, creator or recipient, archive_thread),
             )
 
-            log_count = sum(1 for log in log_data if not log["open"])
+            log_count = len(log_data)
         except Exception:
             logger.error("An error occurred while posting logs to the database.", exc_info=True)
             log_url = log_count = None
@@ -1120,91 +1120,15 @@ class Thread:
         self.bot.config["notification_squad"].pop(str(self.id), None)
 
         # Logging
-        if self.channel:
-            log_data = await self.bot.api.post_log(
-                self.channel.id,
-                {
-                    "open": False,
-                    "title": match_title(self.channel.topic),
-                    "closed_at": str(discord.utils.utcnow()),
-                    "nsfw": self.channel.nsfw,
-                    "close_message": message,
-                    "closer": {
-                        "id": str(closer.id),
-                        "name": closer.name,
-                        "discriminator": closer.discriminator,
-                        "avatar_url": closer.display_avatar.url,
-                        "mod": True,
-                    },
-                },
+        if self._archive_thread:
+            await self.bot.api.post_log(
+                self.recipient.id,
+                self._archive_thread.id,
+                self._archive_thread.created_at
             )
             await self.bot.archive_logger.log_closing_message(self._archive_thread, message or self.bot.config["thread_close_response"], closer.name, silent)
-        else:
-            log_data = None
-
-        if isinstance(log_data, dict):
-            prefix = self.bot.config["log_url_prefix"].strip("/")
-            if prefix == "NONE":
-                prefix = ""
-            log_url = (
-                f"{self.bot.config['log_url'].strip('/')}{'/' + prefix if prefix else ''}/{log_data['key']}"
-            )
-
-            if log_data["title"]:
-                sneak_peak = log_data["title"]
-            elif log_data["messages"]:
-                content = str(log_data["messages"][0]["content"])
-                sneak_peak = content.replace("\n", "")
-            else:
-                sneak_peak = "No content"
-
-            if self.channel.nsfw:
-                _nsfw = "NSFW-"
-            else:
-                _nsfw = ""
-
-            desc = f"**Thread preview:** "
-            desc += truncate(sneak_peak, max=75 - 20)
-        else:
-            desc = "Could not resolve log url."
-            log_url = None
-
-        embed = discord.Embed(description=desc, color=self.bot.error_color)
-
-        if self.recipient is not None:
-            user = f"{self.recipient} (`{self.id}`)"
-        else:
-            user = f"`{self.id}`"
-
-        if self.id == closer.id:
-            _closer = "the Recipient"
-        else:
-            _closer = f"{closer} ({closer.id})"
-
-        embed.title = user
-
-        event = "Closed"
-        # embed.set_author(name=f"Event: {event}", url=log_url)
-        embed.set_footer(text=f"{event} by {_closer}", icon_url=closer.display_avatar.url)
-        embed.timestamp = discord.utils.utcnow()
-
+       
         tasks = [self.bot.config.update()]
-
-        if self.bot.log_channel is not None and self.channel is not None:
-            # Only create a URL button if we actually have a valid log_url
-            view = None
-            if self.bot.config.get("show_log_url_button") and log_url:
-                view = discord.ui.View()
-                view.add_item(discord.ui.Button(label="See Courier Log", url=log_url, style=discord.ButtonStyle.url))
-            async def log_destination_send_task():
-                try:
-                    log_destination = self._archive_thread or self.bot.log_channel
-                    await log_destination.send(embed=embed, view=view, allowed_mentions=False)
-                    return
-                except discord.NotFound:
-                    pass
-                await self.bot.log_channel.send(embed=embed, view=view)
-            tasks.append(log_destination_send_task())
 
         # Thread closed message
 
@@ -1224,8 +1148,8 @@ class Thread:
         message = self.bot.formatter.format(
             message,
             closer=closer,
-            loglink=log_url,
-            logkey=log_data["key"] if log_data else None,
+            loglink=None,
+            logkey=None,
         )
 
         embed.description = message

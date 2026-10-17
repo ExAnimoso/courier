@@ -1,5 +1,6 @@
 import asyncio
 import re
+import math
 from datetime import datetime, timezone, timedelta
 from itertools import zip_longest
 from typing import Optional, Union, List, Tuple, Literal
@@ -881,52 +882,22 @@ class Modmail(commands.Cog):
         log_link = await self.bot.api.get_log_link(ctx.channel.id)
         await ctx.send(embed=discord.Embed(color=self.bot.main_color, description=log_link))
 
-    def format_log_embeds(self, logs, avatar_url):
+    async def format_log_embeds(self, logs, avatar_url, user: discord.User):
         embeds = []
         logs = tuple(logs)
         title = f"Total Results Found ({len(logs)})"
+        page_size = 10
 
-        for entry in logs:
-            created_at = parser.parse(entry["created_at"]).astimezone(timezone.utc)
+        for page in range(0, math.ceil(len(logs) / page_size)):
+            data = logs[page * page_size: (page + 1) * page_size]
 
-            prefix = self.bot.config["log_url_prefix"].strip("/")
-            if prefix == "NONE":
-                prefix = ""
-            log_url = (
-                f"{self.bot.config['log_url'].strip('/')}{'/' + prefix if prefix else ''}/{entry['key']}"
-            )
+            description = ""
+            for entry in data:
+                description += f"<t:{entry['created_at']}:d> - <#{entry['thread_id']}>\n"
 
-            username = entry["recipient"]["name"]
-            if entry["recipient"]["discriminator"] != "0":
-                username += "#" + entry["recipient"]["discriminator"]
-
-            embed = discord.Embed(color=self.bot.main_color, timestamp=created_at)
-            embed.set_author(name=f"{title} - {username}", icon_url=avatar_url, url=log_url)
-            embed.url = log_url
-            embed.add_field(name="Created", value=human_timedelta(created_at))
-            closer = entry.get("closer")
-            if closer is None:
-                closer_msg = "Unknown"
-            else:
-                closer_msg = f"<@{closer['id']}>"
-            embed.add_field(name="Closed By", value=closer_msg)
-
-            if entry["recipient"]["id"] != entry["creator"]["id"]:
-                embed.add_field(name="Created by", value=f"<@{entry['creator']['id']}>")
-
-            if entry.get("title"):
-                embed.add_field(name="Title", value=entry["title"], inline=False)
-
-            embed.add_field(name="Preview", value=format_preview(entry["messages"]), inline=False)
-
-            if closer is not None:
-                # BUG: Currently, logviewer can't display logs without a closer.
-                embed.add_field(name="Link", value=log_url)
-            else:
-                logger.debug("Invalid log entry: no closer.")
-                embed.add_field(name="Log Key", value=f"`{entry['key']}`")
-
-            embed.set_footer(text="Recipient ID: " + str(entry["recipient"]["id"]))
+            embed = discord.Embed(color=self.bot.main_color, description=description)
+            embed.set_author(name=f"{title} - {user.name}", icon_url=avatar_url)
+            embed.set_footer(text=str(user.id))
             embeds.append(embed)
         return embeds
 
@@ -1355,16 +1326,16 @@ class Modmail(commands.Cog):
 
         logs = await self.bot.api.get_user_logs(user.id)
 
-        if not any(not log["open"] for log in logs):
+        if not logs:
             embed = discord.Embed(
                 color=self.bot.error_color,
                 description="This user does not have any previous logs.",
             )
             return await ctx.send(embed=embed)
 
-        logs = reversed([log for log in logs if not log["open"]])
+        logs = reversed(logs)
 
-        embeds = self.format_log_embeds(logs, avatar_url=icon_url)
+        embeds = await self.format_log_embeds(logs, icon_url, user)
 
         session = EmbedPaginatorSession(ctx, *embeds)
         await session.run()
@@ -1378,10 +1349,12 @@ class Modmail(commands.Cog):
         If no `user` is provided, the user will be the person who sent this command.
         `user` may be a user ID, mention, or name.
         """
+        return await ctx.send("Command is not implemented")
+
         user = user if user is not None else ctx.author
 
         entries = await self.bot.api.search_closed_by(user.id)
-        embeds = self.format_log_embeds(entries, avatar_url=self.bot.get_guild_icon(guild=ctx.guild))
+        embeds = self.format_log_embeds(entries, self.bot.get_guild_icon(guild=ctx.guild), None)
 
         if not embeds:
             embed = discord.Embed(
@@ -1399,6 +1372,8 @@ class Modmail(commands.Cog):
         """
         Get the log link for the specified log key.
         """
+        return await ctx.send("Command is not implemented")
+
         icon_url = ctx.author.avatar.url
 
         logs = await self.bot.api.find_log_entry(key)
@@ -1410,7 +1385,7 @@ class Modmail(commands.Cog):
             )
             return await ctx.send(embed=embed)
 
-        embeds = self.format_log_embeds(logs, avatar_url=icon_url)
+        embeds = self.format_log_embeds(logs, icon_url, None)
 
         session = EmbedPaginatorSession(ctx, *embeds)
         await session.run()
@@ -1449,11 +1424,13 @@ class Modmail(commands.Cog):
         If no `user` is provided, the user will be the person who sent this command.
         `user` may be a user ID, mention, or name.
         """
+        return await ctx.send("Command is not implemented")
+
         user = user if user is not None else ctx.author
 
         entries = await self.bot.api.get_responded_logs(user.id)
 
-        embeds = self.format_log_embeds(entries, avatar_url=self.bot.get_guild_icon(guild=ctx.guild))
+        embeds = self.format_log_embeds(entries, self.bot.get_guild_icon(guild=ctx.guild), None)
 
         if not embeds:
             embed = discord.Embed(
@@ -1473,13 +1450,14 @@ class Modmail(commands.Cog):
 
         Provide a `limit` to specify the maximum number of logs the bot should find.
         """
+        return await ctx.send("Command is not implemented")
 
         async with safe_typing(ctx):
             pass
 
         entries = await self.bot.api.search_by_text(query, limit)
 
-        embeds = self.format_log_embeds(entries, avatar_url=self.bot.get_guild_icon(guild=ctx.guild))
+        embeds = self.format_log_embeds(entries, self.bot.get_guild_icon(guild=ctx.guild), user)
 
         if not embeds:
             embed = discord.Embed(
@@ -1490,6 +1468,32 @@ class Modmail(commands.Cog):
 
         session = EmbedPaginatorSession(ctx, *embeds)
         await session.run()
+
+    @commands.command()
+    @checks.has_permissions(PermissionLevel.OWNER)
+    async def log_thread_index(self, ctx):
+        """
+        Index log threads by user id.
+        """
+        def fill_index(log_thread_index, thread):
+            match = re.search(r"\(\d+\)$", thread.name)
+            user_id = match.group()[1:-1]
+            if user_id not in log_thread_index:
+                log_thread_index[user_id] = []
+            log_thread_index[user_id].append({"thread_id": thread.id, "created_at": math.ceil(thread.created_at.timestamp())})            
+
+        log_thread_index = {}
+        async for thread in self.bot.log_channel.archived_threads(limit=None):
+            fill_index(log_thread_index, thread)
+        for k, v in log_thread_index.items():
+            log_thread_index[k] = list(reversed(v))
+        open_threads = set(thread._archive_thread.id for thread in self.bot.threads.cache.values() if thread._archive_thread)
+        for thread in self.bot.log_channel.threads:
+            if thread.id in open_threads:
+                continue
+            fill_index(log_thread_index, thread)
+
+        await self.bot.api.save_log_thread_index(log_thread_index)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.SUPPORTER)
