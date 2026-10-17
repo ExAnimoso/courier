@@ -477,16 +477,7 @@ class Thread:
             except Exception:
                 existing = None
             if existing is None or force:
-                # Build log_url and log_count best-effort
-                prefix = (self.bot.config.get("log_url_prefix") or "").strip("/")
-                if prefix == "NONE":
-                    prefix = ""
-                key = self.snooze_data.get("log_key") or self.log_key
-                log_url = (
-                    f"{self.bot.config['log_url'].strip('/')}{'/' + prefix if prefix else ''}/{key}"
-                    if key
-                    else None
-                )
+                # Build log_count best-effort
                 log_count = None
                 try:
                     logs = await self.bot.api.get_user_logs(self.id)
@@ -505,7 +496,7 @@ class Thread:
                             created_at=datetime.now(timezone.utc),
                         )
                 try:
-                    info_embed = self._format_info_embed(user, log_url, log_count, self.bot.main_color)
+                    info_embed = self._format_info_embed(user, log_count, self.bot.main_color)
                     msg = await channel.send(embed=info_embed)
                     try:
                         await msg.pin()
@@ -585,22 +576,11 @@ class Thread:
 
             # Send history limit notification after genesis
             if limited:
-                prefix = self.bot.config["log_url_prefix"].strip("/")
-                if prefix == "NONE":
-                    prefix = ""
-                log_url = (
-                    f"{self.bot.config['log_url'].strip('/')}{'/' + prefix if prefix else ''}/{self.log_key}"
-                    if self.log_key
-                    else None
-                )
-
                 limit_embed = discord.Embed(
                     color=0xFFA500,
                     title="⚠️ History Limited",
                     description=f"Only showing the last **{history_limit}** messages due to the `unsnooze_history_limit` setting.",
                 )
-                if log_url:
-                    limit_embed.description += f"\n\n[View full history in logs]({log_url})"
                 await _safe_send_to_channel(
                     embeds=[limit_embed],
                     allowed_mentions=discord.AllowedMentions.none(),
@@ -843,7 +823,7 @@ class Thread:
             log_count = len(log_data)
         except Exception:
             logger.error("An error occurred while posting logs to the database.", exc_info=True)
-            log_url = log_count = None
+            log_count = None
             # ensure core functionality still works
 
         self.ready = True
@@ -854,7 +834,7 @@ class Thread:
             mention = self.bot.config["mention"]
 
         async def send_genesis_message():
-            info_embed = self._format_info_embed(recipient, log_url, log_count, self.bot.main_color)
+            info_embed = self._format_info_embed(recipient, log_count, self.bot.main_color)
             try:
                 msg = await channel.send(mention, embed=info_embed)
                 self.bot.loop.create_task(msg.pin())
@@ -979,13 +959,11 @@ class Thread:
         )
         self.bot.dispatch("thread_ready", self, creator, category, initial_message)
 
-    def _format_info_embed(self, user, log_url, log_count, color):
+    def _format_info_embed(self, user, log_count, color):
         """Get information about a member of a server
         supports users from the guild or not."""
         member = self.bot.guild.get_member(user.id)
         time = discord.utils.utcnow()
-
-        # key = log_url.split('/')[-1]
 
         role_names = ""
         if member is not None and self.bot.config["thread_show_roles"]:
