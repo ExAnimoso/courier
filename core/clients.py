@@ -380,7 +380,7 @@ class ApiClient:
     async def get_log_link(self, channel_id: Union[str, int]) -> str:
         return NotImplemented
 
-    async def create_log_entry(self, recipient: Member, channel: TextChannel, creator: Member) -> str:
+    async def create_log_entry(self, recipient: Member) -> str:
         return NotImplemented
 
     async def delete_log_entry(self, key: str) -> bool:

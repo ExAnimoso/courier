@@ -835,7 +835,7 @@ class Thread:
 
         try:
             _, log_data, _ = await asyncio.gather(
-                self.bot.api.create_log_entry(recipient, channel, creator or recipient),
+                self.bot.api.create_log_entry(recipient),
                 self.bot.api.get_user_logs(recipient.id),
                 self.bot.archive_logger.log_thread_start(recipient, creator or recipient, archive_thread),
             )
