@@ -1487,13 +1487,13 @@ class Modmail(commands.Cog):
         log_thread_index = {}
         async for thread in self.bot.log_channel.archived_threads(limit=None):
             fill_index(log_thread_index, thread)
-        for k, v in log_thread_index.items():
-            log_thread_index[k] = list(reversed(v))
         open_threads = set(thread._archive_thread.id for thread in self.bot.threads.cache.values() if thread._archive_thread)
         for thread in self.bot.log_channel.threads:
             if thread.id in open_threads:
                 continue
             fill_index(log_thread_index, thread)
+        for user_id in log_thread_index.keys():
+            log_thread_index[user_id] = sorted(log_thread_index[user_id], key=lambda item: item['created_at'])
 
         await self.bot.api.save_log_thread_index(log_thread_index)
 
