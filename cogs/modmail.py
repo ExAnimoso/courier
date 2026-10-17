@@ -1477,6 +1477,8 @@ class Modmail(commands.Cog):
         """
         def fill_index(log_thread_index, thread):
             match = re.search(r"\(\d+\)$", thread.name)
+            if not match:
+                return
             user_id = match.group()[1:-1]
             if user_id not in log_thread_index:
                 log_thread_index[user_id] = []
